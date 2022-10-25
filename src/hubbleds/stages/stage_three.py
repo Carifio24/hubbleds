@@ -476,10 +476,15 @@ class StageThree(HubbleStage):
                     fit_selection_deactivate)
 
         # If possible, we defer some of the setup for later, to make loading faster
+        self._deferred_setup_complete = False
         if self.story_state.stage_index != self.index:
             add_callback(self.story_state, 'stage_index', self._on_stage_index_changed)
         else:
-            self._deferred_setup()
+            self._maybe_deferred_setup()
+
+        self.hub.subscribe(self, NumericalDataChangedMessage,
+                           filter=self._deferred_setup_filter,
+                           handler=self._maybe_deferred_setup)
     
     def _on_marker_update(self, old, new):
         if not self.trigger_marker_update_cb:
@@ -516,6 +521,8 @@ class StageThree(HubbleStage):
             # viewer.layers[-1].state.visible = False
             viewer.state.x_att = student_data.id[dist_attr]
             viewer.state.y_att = student_data.id[vel_attr]
+
+        print("Set up student data")
         
         # add class measurement data and hide by default
         layer_viewer.add_data(class_meas_data)
@@ -527,6 +534,8 @@ class StageThree(HubbleStage):
         toggle_tool = layer_viewer.toolbar.tools['hubble:togglelayer']
         toggle_tool.set_layer_to_toggle(class_layer)
         layer_viewer.toolbar.set_tool_enabled('hubble:togglelayer', not self.stage_state.marker_before("tre_dat2"))
+
+        print("Set up layer viewer")
 
         # cosmicds PR157 - turn off fit line label for layer_viewer
         layer_viewer.toolbar.tools["hubble:linefit"].show_labels = False
@@ -547,24 +556,28 @@ class StageThree(HubbleStage):
         comparison_viewer.state.y_att = class_meas_data.id[vel_attr]
         comparison_viewer.state.reset_limits()
 
-        all_data = self.get_data(ALL_DATA_LABEL)
-        student_layer = all_viewer.layers[-1]
-        student_layer.state.color = 'orange'
-        student_layer.state.zorder = 3
-        student_layer.state.size = 8
-        student_layer.state.visible = False
-        all_viewer.add_data(class_meas_data)
-        class_layer = all_viewer.layers[-1]
-        class_layer.state.zorder = 2
-        class_layer.state.size = 5
-        class_layer.state.color = 'red'
-        class_layer.state.visible = False
-        all_viewer.add_data(all_data)
-        all_layer = all_viewer.layers[-2]
-        all_layer.state.zorder = 1
-        all_layer.state.visible = False
-        all_viewer.state.x_att = all_data.id[dist_attr]
-        all_viewer.state.y_att = all_data.id[vel_attr]
+        print("Set up comparison viewer")
+
+        # all_data = self.get_data(ALL_DATA_LABEL)
+        # student_layer = all_viewer.layers[-1]
+        # student_layer.state.color = 'orange'
+        # student_layer.state.zorder = 3
+        # student_layer.state.size = 8
+        # student_layer.state.visible = False
+        # all_viewer.add_data(class_meas_data)
+        # class_layer = all_viewer.layers[-1]
+        # class_layer.state.zorder = 2
+        # class_layer.state.size = 5
+        # class_layer.state.color = 'red'
+        # class_layer.state.visible = False
+        # all_viewer.add_data(all_data)
+        # all_layer = all_viewer.layers[-2]
+        # all_layer.state.zorder = 1
+        # all_layer.state.visible = False
+        # all_viewer.state.x_att = all_data.id[dist_attr]
+        # all_viewer.state.y_att = all_data.id[vel_attr]
+
+        # print("Set up all viewer")
 
         # In the comparison viewer, we only want to see the line for the student slider subset
         linefit_id = "hubble:linefit"
@@ -573,6 +586,8 @@ class StageThree(HubbleStage):
         comparison_linefit.add_ignore_condition(lambda layer: layer.layer.label != self.student_slider_subset.label)
         comparison_linefit.activate()
         comparison_toolbar.set_tool_enabled(linefit_id, False)
+
+        print("Set up tools")
 
     # def _setup_second_scatter_layers(self):
     #     hubble1929 = self.get_data(HUBBLE_1929_DATA_LABEL)
@@ -648,9 +663,23 @@ class StageThree(HubbleStage):
             # Remove this callback once we're done
             remove_callback(self.story_state, 'stage_index', self._on_stage_index_changed)
 
+    def _maybe_deferred_setup(self, msg=None):
+        print("Maybe deferred setup?")
+        if self._deferred_setup_complete or \
+           self.get_data(STUDENT_DATA_LABEL).size < 2 or \
+           self.get_data(CLASS_DATA_LABEL).size == 0:
+            return
+
+        self._deferred_setup()
+
+    def _deferred_setup_filter(self, msg):
+        return msg.data.label in [STUDENT_DATA_LABEL, CLASS_DATA_LABEL]
+
     def _deferred_setup(self):
+        print("Deferred setup!")
         self._setup_first_scatter_layers()
         self._setup_histogram_layers()
+        self._deferred_setup_complete = True
         # self._setup_morphology_subsets()
 
     @property
