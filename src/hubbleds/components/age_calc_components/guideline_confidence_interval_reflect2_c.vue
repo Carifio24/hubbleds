@@ -2,10 +2,10 @@
   <scaffold-alert
     header-text="Identify Your Confidence Interval"
     @back="
-      state.marker = 'age_dis1';
+      state.marker = 'age_dis1c';
     "
     @next="
-      state.marker = 'age_uni1c';
+      state.marker = 'con_int2c';
     "
   >
     <div
@@ -70,12 +70,11 @@
           cols="12"
           lg="3"
         >
-          <free-response
+          <v-textarea
             outlined
             rows="1"
             label="Best Guess Age"
-            tag="best-guess-age"
-          ></free-response>
+          ></v-textarea>
         </v-col>
         <v-col>
           Gyr
@@ -147,12 +146,11 @@
         <v-col
           cols="12"
           lg="3">
-          <free-response
+          <v-textarea
             outlined
             rows="1"
             label="Likely Low Age"
-            tag="likely-low-age"
-          ></free-response>
+          ></v-textarea>
         </v-col>
         <v-col
           lg="2">
@@ -161,12 +159,11 @@
               <v-col
           cols="12"
           lg="3">
-          <free-response
+          <v-textarea
             outlined
             rows="1"
             label="Likely High Age"
-            tag="likely-high-age"
-          ></free-response>
+          ></v-textarea>
         </v-col>
         <v-col
           lg="2">
@@ -177,13 +174,12 @@
       <p class="mt-4">
         3. Explain why you chose your values using information from the scatterplot and/or the histogram:
       </p>
-      <free-response
+      <v-textarea
         outlined
         auto-grow
         rows="2"
         label="My Reasoning"
-        tag="my-reasoning"
-      ></free-response>
+      ></v-textarea>
 
       <v-row>
         <v-col
@@ -243,13 +239,12 @@
         </v-col>
       </v-row>
 
-      <free-response
+      <v-textarea
         outlined
         auto-grow
         rows="2"
         label="My Level of Confidence"
-        tag="my-confidence"
-      ></free-response>
+      ></v-textarea>
     </div>
   </scaffold-alert>
 </template>

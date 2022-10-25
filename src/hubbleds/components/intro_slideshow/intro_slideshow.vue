@@ -85,7 +85,13 @@
                 <p
                   class="text-center grey--text"
                 >
-                  [ Pictures of old telescopes &amp; astronomers ]
+                <v-col cols="12">
+                <v-img
+                  lazy-src="https://raw.githubusercontent.com/cosmicds/cds-website/main/public/hubbleds_images/stage_intro/School_of_Athens.jpg"
+                  src="https://raw.githubusercontent.com/cosmicds/cds-website/main/public/hubbleds_images/stage_intro/School_of_Athens.jpg"
+                  alt="School of Athens"
+                ></v-img>
+              </v-col>
                 </p>
               </v-col>
             </v-row>
@@ -490,8 +496,23 @@
                 <p
                   class="text-center grey--text"
                 >
-                  [ Pictures of Henrietta's glass plates ]
                 </p>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols= "6">
+                <v-img
+                    lazy-src="https://raw.githubusercontent.com/cosmicds/cds-website/main/public/hubbleds_images/stage_intro/Leavitt_at_work.jpg"
+                    src="https://raw.githubusercontent.com/cosmicds/cds-website/main/public/hubbleds_images/stage_intro/Leavitt_at_work.jpg"
+                    alt="Leavitt at Work "
+                  ></v-img>
+              </v-col>
+              <v-col cols= "5">
+                <v-img
+                    lazy-src="https://raw.githubusercontent.com/cosmicds/cds-website/main/public/hubbleds_images/stage_intro/Leavitt_Plate.png"
+                    src="https://raw.githubusercontent.com/cosmicds/cds-website/main/public/hubbleds_images/stage_intro/Leavitt_Plate.png"
+                    alt="Leavitt Plate"
+                  ></v-img>
               </v-col>
             </v-row>
           </v-container>
@@ -514,6 +535,13 @@
                 <p>
                   It’s time for you to collect some of your own data, form conclusions, and compare your conclusions to what Vesto Slipher found.
                 </p>
+              </v-col>
+              <v-col cols="6">
+                <v-img
+                  lazy-src="https://raw.githubusercontent.com/cosmicds/cds-website/main/public/hubbleds_images/stage_intro/V.M.Slipher.gif"
+                  src="https://raw.githubusercontent.com/cosmicds/cds-website/main/public/hubbleds_images/stage_intro/V.M.Slipher.gif"
+                  alt="Vesto"
+                ></v-img>
               </v-col>
             </v-row>
           </v-container>

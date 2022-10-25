@@ -28,14 +28,17 @@
         <c-guideline-angsize-meas2
           v-if="stage_state.marker == 'ang_siz2'"
           v-intersect.once="scrollIntoView" />
+        <c-guideline-angsize-meas2b
+          v-if="stage_state.marker == 'ang_siz2b'"
+          v-intersect.once="scrollIntoView" />
         <c-guideline-angsize-meas3
           v-if="stage_state.marker == 'ang_siz3'"
           v-intersect.once="scrollIntoView" />
         <c-guideline-angsize-meas4
           v-if="stage_state.marker == 'ang_siz4'"
           v-intersect.once="scrollIntoView" />
-        <c-guideline-angsize-meas5
-          v-if="stage_state.marker == 'ang_siz5'"
+        <c-guideline-angsize-meas5a
+          v-if="stage_state.marker == 'ang_siz5a'"
           v-intersect.once="scrollIntoView" />
         <c-guideline-angsize-meas6
           v-if="stage_state.marker == 'ang_siz6'"
@@ -67,7 +70,9 @@
             </v-card>
           </v-col>
         </v-row>
-        <v-row>
+        <v-row
+          v-if="stage_state.indices[stage_state.marker] > stage_state.indices['ang_siz5']"
+        >
           <v-col
             cols="6"
             offset="3"
@@ -92,6 +97,9 @@
       >
         <c-guideline-choose-row1
           v-if="stage_state.marker == 'cho_row1'"
+          v-intersect.once="scrollIntoView" />
+        <c-guideline-angsize-meas5
+          v-if="stage_state.marker == 'ang_siz5'"
           v-intersect.once="scrollIntoView" />
         <c-guideline-choose-row2
           v-if="stage_state.marker == 'cho_row2'"

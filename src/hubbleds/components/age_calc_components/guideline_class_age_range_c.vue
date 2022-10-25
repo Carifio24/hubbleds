@@ -55,7 +55,7 @@
           color="accent"
           elevation="2"
           @click="
-            state.marker = 'rel_age1';
+            state.marker = 'cla_res1c';
           "
         >
           back
@@ -70,8 +70,8 @@
           color="accent"
           elevation="2"
           @click="() => {
-            const expectedAnswers = [state.stu_low_age, state.stu_high_age];
-            state.marker = validateAnswersJS(['low_age', 'high_age'], expectedAnswers) ? 'cla_age2' : 'cla_age1';
+            const expectedAnswers = [state.cla_low_age, state.cla_high_age];
+            state.marker = validateAnswersJS(['low_age', 'high_age'], expectedAnswers) ? 'age_dis1c' : 'cla_age1c';
           }"
         >
           check

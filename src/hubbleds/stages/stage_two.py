@@ -47,9 +47,11 @@ class StageState(CDSState):
         'ang_siz1',
         'cho_row1',
         'ang_siz2',
+        'ang_siz2b',
         'ang_siz3',
         'ang_siz4',
         'ang_siz5',
+        'ang_siz5a',
         'ang_siz6',
         'rep_rem1',
         'est_dis1',
@@ -63,13 +65,13 @@ class StageState(CDSState):
 
     step_markers = CallbackProperty([
         'ang_siz1',
-        'ang_siz3',
         'est_dis1'
     ])
 
     csv_highlights = CallbackProperty([
         'ang_siz1',
         'ang_siz2',
+        'ang_siz2b',
         'ang_siz3',
         'ang_siz4',
         'ang_siz5',
@@ -109,7 +111,6 @@ class StageState(CDSState):
 
 
 @register_stage(story="hubbles_law", index=3, steps=[
-    "ANGULAR SIZES",
     "MEASURE SIZE",
     "ESTIMATE DISTANCE"
 ])
@@ -201,9 +202,11 @@ class StageTwo(HubbleStage):
             "guideline_angsize_meas1",
             "guideline_choose_row1",
             "guideline_angsize_meas2",
+            "guideline_angsize_meas2b",
             "guideline_angsize_meas3",
             "guideline_angsize_meas4",
             "guideline_angsize_meas5",
+            "guideline_angsize_meas5a",
             "guideline_angsize_meas6",
             "guideline_repeat_remaining_galaxies",
             "guideline_estimate_distance1",

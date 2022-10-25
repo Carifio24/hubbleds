@@ -35,7 +35,7 @@
           color="accent"
           elevation="2"
           @click="
-            state.marker = 'ang_siz2'
+            state.marker = 'ang_siz2b'
           "
         >
           back

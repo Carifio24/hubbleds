@@ -96,8 +96,8 @@ class HubblesLaw(Story):
         HubblesLaw.prune_none(all_data)
         self.data_collection.append(all_data)
 
-        all_student_summ_data = self.data_from_summaries(all_student_summaries, "all_student_summaries")
-        all_class_summ_data = self.data_from_summaries(all_class_summaries, "all_class_summaries")
+        all_student_summ_data = self.data_from_summaries(all_student_summaries, label="all_student_summaries", id_key="student_id")
+        all_class_summ_data = self.data_from_summaries(all_class_summaries, label="all_class_summaries", id_key="class_id")
         self.data_collection.append(all_student_summ_data)
         self.data_collection.append(all_class_summ_data)
         for comp in ['age', 'H0']:
@@ -259,8 +259,13 @@ class HubblesLaw(Story):
                 components["name"][i] = name[:-len(self.name_ext)]
         return Data(**components)
 
-    def data_from_summaries(self, summaries, label=None):
+    def data_from_summaries(self, summaries, id_key=None, label=None):
         components = { STATE_TO_SUMM.get(k, k) : [summary.get(k, None) for summary in summaries] for k in self.summary_keys }
+        if id_key is not None:
+            ids = [summary.get(id_key, None) for summary in summaries]
+            ids = [x for x in ids if x is not None]
+            components.update({ id_key: ids})
+
         data = Data(**components)
         if label is not None:
             data.label = label

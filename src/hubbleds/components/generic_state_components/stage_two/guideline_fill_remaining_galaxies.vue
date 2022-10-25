@@ -42,14 +42,14 @@
         </v-btn>
       <v-spacer></v-spacer>
       <v-col
-        cols="6"
+        cols="4"
         class="shrink"
         v-if="state.distances_total < 5"
       >
         <div
           style="font-size: 16px;"
         >
-          Click <v-icon>mdi-tape-measure</v-icon>
+          Click <v-icon>mdi-tape-measure</v-icon> in toolbar
         </div>
       </v-col>
       <v-col
