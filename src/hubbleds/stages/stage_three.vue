@@ -141,6 +141,7 @@
           :class="stage_state.my_galaxies_plot_highlights.includes(stage_state.marker) ? 'pa-1 my-n1' : 'pa-0'"
           outlined
         >
+          <c-layer-toggle />
           <v-lazy>
             <jupyter-widget :widget="viewers.layer_viewer"/>
           </v-lazy>
