@@ -313,6 +313,7 @@ class StageThree(HubbleStage):
             STUDENT_DATA_LABEL: "My Data",
             CLASS_DATA_LABEL: "Class Data"
         })
+        layer_toggle.add_ignore_condition(lambda layer: layer.layer.label == CLASS_DATA_LABEL)
         self.add_component(layer_toggle, label="c-layer-toggle")
                                                  
         for key in hubble_race_viewer.toolbar.tools:
