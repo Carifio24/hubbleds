@@ -313,7 +313,7 @@ class StageThree(HubbleStage):
             STUDENT_DATA_LABEL: "My Data",
             CLASS_DATA_LABEL: "Class Data"
         })
-        layer_toggle.add_ignore_condition(lambda layer: layer.layer.label == CLASS_DATA_LABEL)
+        #layer_toggle.add_ignore_condition(lambda layer: layer.layer.label == CLASS_DATA_LABEL)
         self.add_component(layer_toggle, label="c-layer-toggle")
                                                  
         for key in hubble_race_viewer.toolbar.tools:
@@ -801,6 +801,11 @@ class StageThree(HubbleStage):
         layer_toolbar = layer_viewer.toolbar
         layer_linefit = layer_toolbar.tools[linefit_id]
         layer_linefit.add_ignore_condition(lambda layer: layer.layer.label == BEST_FIT_SUBSET_LABEL)
+
+        layer_toggle = self.get_component("c-layer-toggle")
+        student_layer = layer_viewer.layer_artist_for_data(student_data)
+        class_layer = layer_viewer.layer_artist_for_data(class_meas_data)
+        layer_toggle.set_layer_order([student_layer, class_layer])
 
     def _setup_histogram_layers(self):
         class_distr_viewer = self.get_viewer("class_distr_viewer")
