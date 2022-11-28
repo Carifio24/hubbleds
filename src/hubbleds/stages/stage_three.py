@@ -806,6 +806,9 @@ class StageThree(HubbleStage):
         student_layer = layer_viewer.layer_artist_for_data(student_data)
         class_layer = layer_viewer.layer_artist_for_data(class_meas_data)
         layer_toggle.set_layer_order([student_layer, class_layer])
+        # student_layer.state.alpha = 0.2
+        # class_layer.state.alpha = 0.7
+        # layer_toggle.sort_by(lambda layer: layer.state.alpha)
 
     def _setup_histogram_layers(self):
         class_distr_viewer = self.get_viewer("class_distr_viewer")
