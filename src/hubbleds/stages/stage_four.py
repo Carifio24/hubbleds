@@ -303,25 +303,12 @@ class StageFour(HubbleStage):
         class_slider.on_id_change(class_slider_change)
         class_slider.on_refresh(class_slider_refresh)
 
-        self.hub.subscribe(self, NumericalDataChangedMessage,
-                           filter=lambda msg: msg.data.label == STUDENT_DATA_LABEL,
-                           handler=student_slider_refresh)
-        self.hub.subscribe(self, NumericalDataChangedMessage,
-                           filter=lambda msg: msg.data.label == CLASS_SUMMARY_LABEL,
-                           handler=class_slider_refresh)
-
-        def update_class_slider(msg):
-            class_slider.update_data(self, msg.data)
-        self.hub.subscribe(self, NumericalDataChangedMessage, filter=lambda d: d.label == ALL_CLASS_SUMMARIES_LABEL, handler=update_class_slider)    
-
-        classes_summary_data = self.get_data(ALL_CLASS_SUMMARIES_LABEL)
-
         not_ignore = {
             fit_table.subset_label: [layer_viewer],
             histogram_source_label: [class_distr_viewer],
             histogram_modify_label: [comparison_viewer],
             student_slider_subset_label: [comparison_viewer],
-            BEST_FIT_SUBSET_LABEL: [comparison_viewer, layer_viewer]
+            BEST_FIT_SUBSET_LABEL: [comparison_viewer]
         }
 
         def label_ignore(x, label):
@@ -641,9 +628,13 @@ class StageFour(HubbleStage):
         label = msg.data.label
         if self.story_state.stage_index == self.index:
             if label == STUDENT_DATA_LABEL:
+                self.get_component("py-student-slider").refresh()
                 self._update_hypgal_info()
             elif label == CLASS_SUMMARY_LABEL:
                 self.get_component("py-student-slider").refresh()
+            elif label == ALL_CLASS_SUMMARIES_LABEL:
+                class_slider = self.get_component("py-class-slider")
+                class_slider.update_data(self, msg.data)
             self._reset_limits_for_data(label)
 
     def _on_class_data_update(self, *args):
