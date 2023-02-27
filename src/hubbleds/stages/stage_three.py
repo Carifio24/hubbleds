@@ -44,6 +44,7 @@ class StageState(CDSState):
 
     hypgal_distance = CallbackProperty(0)
     hypgal_velocity = CallbackProperty(0)
+    age_const = CallbackProperty(float(AGE_CONSTANT))
 
 
     #TrendsData ver
@@ -477,17 +478,6 @@ class StageThree(HubbleStage):
         linefit_tool = layer_viewer.toolbar.tools["hubble:linefit"]
         if value and not linefit_tool.active:
             linefit_tool.activate()
-    
-    # AgeCalc
-    def age_calc_update_guesses(self, responses):
-        if '4' in responses:
-            r4 = responses['4']
-            self.best_guess = r4.get('best-guess-age', "")
-            self.low_guess = r4.get('likely-low-age', "")
-            self.high_guess = r4.get('likely-high-age', "")
-            self.short_one = r4.get('shortcoming-1', "")
-            self.short_two = r4.get('shortcoming-2', "")
-            self.short_other = r4.get('other-shortcomings', "")
     
     def _on_stage_three_complete(self, change):
         if change:

@@ -28,7 +28,7 @@
               <div
                 class="JaxEquation"
               >
-                $$ t \text{ (in Gyr)}= {{ Math.round(state.age_calc_state.age_const) }}  \times \frac{d \text{ (in Mpc)}}{v \text{ (in km/s)}} $$
+                $$ t \text{ (in Gyr)}= {{ Math.round(state.age_const) }}  \times \frac{d \text{ (in Mpc)}}{v \text{ (in km/s)}} $$
               </div>
             </v-col>
           </v-row>

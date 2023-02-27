@@ -23,7 +23,7 @@
       <div
         class="JaxEquation my-8"
       >
-        $$ t = {{ Math.round(state.age_calc_state.age_const) }}  \times \frac{\bbox[#FBE9E7]{\input[gal_distance][]{} } \text{ Mpc} } { \bbox[#FBE9E7]{\input[gal_velocity][]{} } \text{ km/s} } \text{     Gyr}$$
+        $$ t = {{ Math.round(state.age_const) }}  \times \frac{\bbox[#FBE9E7]{\input[gal_distance][]{} } \text{ Mpc} } { \bbox[#FBE9E7]{\input[gal_velocity][]{} } \text{ km/s} } \text{     Gyr}$$
       </div>
       <v-divider role="presentation"></v-divider>
       <div
@@ -45,7 +45,7 @@
               <div
                 class="JaxEquation"
               >
-                $$ t \text{ (in Gyr)}= {{ Math.round(state.age_calc_state.age_const) }}  \times \frac{d \text{ (in Mpc)}}{v \text{ (in km/s)}} $$
+                $$ t \text{ (in Gyr)}= {{ Math.round(state.age_const) }}  \times \frac{d \text{ (in Mpc)}}{v \text{ (in km/s)}} $$
               </div>
             </v-col>
           </v-row>
@@ -100,11 +100,11 @@
     </div>
     <v-divider
       class="my-4"
-      v-if="state.age_calc_state.failedValidation3"
+      v-if="failedValidation"
     >
     </v-divider>
     <v-alert
-      v-if="state.age_calc_state.failedValidation3"
+      v-if="failedValidation"
       dense
       color="info darken-1"
     >
@@ -154,6 +154,12 @@ module.exports = {
   
   props: ['state'],
 
+  data: function() {
+    return {
+      failedValidation: false
+    }
+  },
+
   methods: {
     getValue(inputID) {
       const input = document.getElementById(inputID);
@@ -168,7 +174,7 @@ module.exports = {
     validateAnswersJS(inputIDs, expectedAnswers) {
       return inputIDs.every((id, index) => {
         const value = this.parseAnswer(id);
-        this.state.age_calc_state.failedValidation3 = (value && value === expectedAnswers[index]) ? false : true;
+        this.failedValidation = (value && value === expectedAnswers[index]) ? false : true;
         console.log("expectedAnswer", expectedAnswers);
         console.log("entered value", value);
         return value && value === expectedAnswers[index];
