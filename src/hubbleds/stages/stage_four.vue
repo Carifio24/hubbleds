@@ -185,6 +185,7 @@
       >
         <guideline-class-age-distribution
           v-if="stage_state.marker == 'age_dis1'"
+          :state="stage_state"
           v-intersect.once="scrollIntoView"/>
       </v-col>
       <v-col
