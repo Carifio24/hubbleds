@@ -91,10 +91,6 @@ module.exports = {
     }
   },
 
-  mounted() {
-    console.log(this);
-  },
-
   methods: {
     getValue(inputID) {
       const input = document.getElementById(inputID);
