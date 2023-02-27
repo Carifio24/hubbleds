@@ -81,7 +81,15 @@ mjx-mstyle {
 </style>
 
 <script>
-export default {
+module.exports = {
+
+  props: ['state'],
+
+  data: function() {
+    return {
+      failedValidationAgeRange: false
+    }
+  },
 
   methods: {
     getValue(inputID) {

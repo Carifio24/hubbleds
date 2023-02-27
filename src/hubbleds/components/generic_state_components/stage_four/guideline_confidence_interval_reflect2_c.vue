@@ -193,6 +193,6 @@
 
 <script>
 module.exports = {
-  props: ['state']
+  props: ['state'],
 }
 </script>
