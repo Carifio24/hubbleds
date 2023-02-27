@@ -53,9 +53,6 @@ class StageState(CDSState):
     cla_high_age = CallbackProperty(0)
 
     age_calc_state = DictCallbackProperty({
-        'failedValidation3': False,
-        'failedValidationAgeRange': False,
-        'age_const': 0,
         'hint1_dialog': False,
         'hint2_dialog': False,
         'hint3_dialog': False,
@@ -308,7 +305,7 @@ class StageFour(HubbleStage):
             histogram_source_label: [class_distr_viewer],
             histogram_modify_label: [comparison_viewer],
             student_slider_subset_label: [comparison_viewer],
-            BEST_FIT_SUBSET_LABEL: [comparison_viewer]
+            BEST_FIT_SUBSET_LABEL: [layer_viewer]
         }
 
         def label_ignore(x, label):
@@ -543,7 +540,7 @@ class StageFour(HubbleStage):
         style_name = f"default_histogram_{theme}"
         style = load_style(style_name)
         update_figure_css(all_distr_viewer_student, style_dict=style)
-        update_figure_css(all_distr_viewer_class, style_dict=style)    
+        update_figure_css(all_distr_viewer_class, style_dict=style)
 
     def _deferred_setup(self):
         self._setup_scatter_layers()
@@ -649,6 +646,18 @@ class StageFour(HubbleStage):
         
     def _on_class_layer_toggled(self, used):
         self.stage_state.class_layer_toggled = used 
+
+    def age_calc_update_guesses(self, responses):
+        key = str(self.index)
+        if key in responses:
+            r = responses[key]
+            state = self.state_state.age_calc_state
+            state['low_guess'] = r.get('likely-low-age', "")
+            state['high_guess'] = r.get('likely-high-age', "")
+            state['best_guess'] = r.get('best-guess-age', "")
+            state['short_one'] = r.get('shortcoming-1', "")
+            state['short_two'] = r.get('shortcoming-2', "")
+            state['short_other'] = r.get('other-shortcomings', "")
     
     def _on_stage_index_changed(self, index):
         print("Stage Index: ",self.story_state.stage_index)
@@ -657,3 +666,6 @@ class StageFour(HubbleStage):
 
             # Remove this callback once we're done
             remove_callback(self.story_state, 'stage_index', self._on_stage_index_changed)
+
+        if index == self.index:
+            self.reset_viewer_limits()
