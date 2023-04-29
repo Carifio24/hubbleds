@@ -28,6 +28,12 @@ class SpectrumViewerState(LineHoverStateMixin, ScatterViewerState):
     def ymax_factor(self):
         return self._YMAX_FACTOR
 
+    def _reset_x_limits(self, *args):
+        with delay_callback(self, 'x_min', 'x_max'):
+            xmin, xmax = self.x_min, self.x_max
+            super()._reset_x_limits(*args)
+            self.resolution_x *= (self.x_max - self.x_min) / (xmax - xmin)
+
     def _reset_y_limits(self):
         with delay_callback(self, 'y_min', 'y_max'):
             ymin, ymax = self.y_min, self.y_max
@@ -37,12 +43,8 @@ class SpectrumViewerState(LineHoverStateMixin, ScatterViewerState):
 
     def reset_limits(self):
         with delay_callback(self, 'x_min', 'x_max', 'y_min', 'y_max'):
-            xmin, xmax = self.x_min, self.x_max
-            ymin, ymax = self.y_min, self.y_max
-            super().reset_limits()
-            self.y_max = self._YMAX_FACTOR * self.y_max
-            self.resolution_x *= (self.x_max - self.x_min) / (xmax - xmin)
-            self.resolution_y *= (self.y_max - self.y_min) / (ymax - ymin)
+            self._reset_x_limits()
+            self._reset_y_limits()
 
 
 class SpectrumViewLayerArtist(BqplotScatterLayerArtist):
