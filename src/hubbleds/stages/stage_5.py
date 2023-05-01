@@ -467,8 +467,8 @@ class StageFour(HubbleStage):
 
         layer_viewer.toolbar.tools["hubble:linefit"].deactivate() 
 
-        if(self.story_state.has_best_fit_galaxy):
-            best_fit_subset = self.get_data(STUDENT_DATA_LABEL).subsets[0]
+        if self.story_state.has_best_fit_galaxy and len(student_data.subsets) > 0:
+            best_fit_subset = student_data.subsets[0]
             best_fit_layer = layer_viewer.layer_artist_for_data(best_fit_subset)
             best_fit_layer.state.visible = False
 
