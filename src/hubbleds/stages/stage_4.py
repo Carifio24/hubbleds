@@ -1,8 +1,6 @@
 from functools import partial
-from os.path import join
-from pathlib import Path
 
-from numpy import asarray, where
+from numpy import where
 from cosmicds.components.layer_toggle import LayerToggle
 from cosmicds.components.table import Table
 from cosmicds.phases import CDSState
@@ -173,7 +171,8 @@ class StageThree(HubbleStage):
 
         self.show_team_interface = self.app_state.show_team_interface
         self._setup_complete = False
-        
+        self._class_layer_setup = False
+
         # This is a hacky fix because these are not initializing correctly on a reload, so we are backing them up 1 or 2 guidelines, and when they go forward again they will be correct.
         if self.stage_state.marker in ['tre_lin2', 'bes_fit1']:
             self.stage_state.marker = 'tre_lin1'
@@ -324,33 +323,44 @@ class StageThree(HubbleStage):
         if advancing and new =="age_rac1":
             self._update_hypgal_info()
         
-        
     def _on_slideshow_opened(self, msg):
         self.stage_state.hubble_dialog_opened = msg["new"]
-    
-    def _setup_scatter_layers(self):
+
+    def _setup_student_layer(self):
         layer_viewer = self.get_viewer("layer_viewer")
         student_data = self.get_data(STUDENT_DATA_LABEL)
-        class_meas_data = self.get_data(CLASS_DATA_LABEL)
         layer_viewer.add_data(student_data)
         layer_viewer.state.x_att = student_data.id[DISTANCE_COMPONENT]
         layer_viewer.state.y_att = student_data.id[VELOCITY_COMPONENT]
-        
+
         # PALETTE: Y:FFBE0B, O:FB5607, Pi:FF006E, Pu:8338EC, Bl:3A86FF, LiBl:619EFF
-        student_layer = layer_viewer.layer_artist_for_data(student_data)
-        student_layer.state.color = '#FB5607'
-        student_layer.state.zorder = 5
-        student_layer.state.size = 8                    
-        student_layer.state.alpha = 1
-        # add class measurement data and hide by default
-        layer_viewer.add_data(class_meas_data)
+        layer = layer_viewer.layer_artist_for_data(student_data)
+        layer.state.color = '#FB5607'
+        layer.state.zorder = 5
+        layer.state.size = 8                    
+        layer.state.alpha = 1
+ 
+    def _setup_class_layer(self):
+        layer_viewer = self.get_viewer("layer_viewer")
+        class_data = self.get_data(CLASS_DATA_LABEL)
+        
+        layer_viewer.add_data(class_data)
         layer_viewer.state.reset_limits()
-        class_layer = layer_viewer.layer_artist_for_data(class_meas_data)
-        class_layer.state.zorder = 1
-        class_layer.state.color = "#3A86FF"
-        class_layer.state.alpha = 1
-        class_layer.state.size = 4
-        class_layer.state.visible = False
+        layer = layer_viewer.layer_artist_for_data(class_data)
+        layer.state.zorder = 1
+        layer.state.color = "#3A86FF"
+        layer.state.alpha = 1
+        layer.state.size = 4
+        layer.state.visible = False
+
+        self._class_layer_setup = True 
+
+    def _setup_scatter_layers(self):
+        self._setup_student_layer()
+        class_data = self.get_data(CLASS_DATA_LABEL)
+        if class_data.size > 0:
+            self._setup_class_layer()
+        layer_viewer = self.get_viewer("layer_viewer")
 
         # cosmicds PR157 - turn off fit line label for layer_viewer
         layer_viewer.toolbar.tools["hubble:linefit"].show_labels = False
@@ -370,8 +380,6 @@ class StageThree(HubbleStage):
         layer_linefit.add_ignore_condition(lambda layer: layer.layer.label == BEST_FIT_SUBSET_LABEL)
 
         layer_toggle = self.get_component("py-layer-toggle")
-        student_layer = layer_viewer.layer_artist_for_data(student_data)
-        class_layer = layer_viewer.layer_artist_for_data(class_meas_data)
         
         table = self.get_widget('fit_table')
         table_subset_label = table.subset_label
@@ -435,6 +443,10 @@ class StageThree(HubbleStage):
             self._reset_limits_for_data(label)
         if label == STUDENT_DATA_LABEL:
             self._update_hypgal_info() 
+        if label == CLASS_DATA_LABEL and \
+                msg.data.size > 0 and \
+                not self._class_layer_setup:
+            self._setup_class_layer
 
     def _update_viewer_style(self, dark):
         viewers = ['layer_viewer',
