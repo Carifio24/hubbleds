@@ -134,6 +134,7 @@ class StageFive(HubbleStage):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.show_team_interface = self.app_state.show_team_interface
+        self._class_layer_setup = False
         
         # self.stage_state.marker = self.stage_state.markers[0]
         
@@ -160,19 +161,28 @@ class StageFive(HubbleStage):
         
         self._update_viewer_style(dark=self.app_state.dark_mode)
 
-        # Functions to call on data updates
-        self.hub.subscribe(self, NumericalDataChangedMessage,
-                           filter=lambda msg: msg.data.label == STUDENT_DATA_LABEL,
-                           handler=self._on_student_data_update)
-        self.hub.subscribe(self, NumericalDataChangedMessage,
-                           filter=lambda msg: msg.data.label == CLASS_DATA_LABEL,
-                           handler=self._on_class_data_update)
+        self.hub.subscribe(self, NumericalDataChangedMessage, handler=self._on_data_update)
+
         if self.story_state.has_best_fit_galaxy:
             self.set_our_age()
         
         if self.stage_state.marker_reached('pro_dat1'):
-                self.set_class_age()
+            self.set_class_age()
 
+    def _setup_class_layer(self):
+        class_data = self.get_data(CLASS_DATA_LABEL)
+        prodata_viewer = self.get_viewer("prodata_viewer")
+        prodata_viewer.add_data(class_data)
+        class_layer = prodata_viewer.layer_artist_for_data(class_data)
+        class_layer.state.zorder = 1
+        class_layer.state.color = "#3A86FF"
+        class_layer.state.alpha = 1
+        class_layer.state.size = 4
+
+        prodata_viewer.state.x_att = class_data.id[DISTANCE_COMPONENT]
+        prodata_viewer.state.y_att = class_data.id[VELOCITY_COMPONENT]
+
+        self._class_layer_setup = True 
         
     def setup_prodata_viewer(self):
         # load the prodata_viewer
@@ -199,18 +209,7 @@ class StageFive(HubbleStage):
 
         # Avoid picking up subsets of the different layers.
         prodata_viewer.ignore(lambda layer: layer.label not in [STUDENT_DATA_LABEL, CLASS_DATA_LABEL, HUBBLE_KEY_DATA_LABEL, HUBBLE_1929_DATA_LABEL] and isinstance(layer, Subset))
-
-        # load data into the viewer and style
-        prodata_viewer.add_data(class_data)
-        class_layer = prodata_viewer.layer_artist_for_data(class_data)
-        class_layer.state.zorder = 1
-        class_layer.state.color = "#3A86FF"
-        class_layer.state.alpha = 1
-        class_layer.state.size = 4
-
-        prodata_viewer.state.x_att = class_data.id[DISTANCE_COMPONENT]
-        prodata_viewer.state.y_att = class_data.id[VELOCITY_COMPONENT]
-
+ 
         prodata_viewer.add_data(student_data)
         student_layer = prodata_viewer.layer_artist_for_data(student_data)
         student_layer.state.color = '#FF7043'
@@ -218,7 +217,10 @@ class StageFive(HubbleStage):
         student_layer.state.size = 8                    
         student_layer.state.alpha = 1
         student_layer.state.visible = False
- 
+
+        if class_data.size > 0:
+            self._setup_class_layer()
+
         # load hubble 1929 data
         prodata_viewer.add_data(hubble_data)
         hubble_layer = prodata_viewer.layer_artist_for_data(hubble_data)
@@ -255,14 +257,18 @@ class StageFive(HubbleStage):
         prodata_viewer = self.get_viewer("prodata_viewer")
         prodata_viewer.state.reset_limits()
     
-    def _on_class_data_update(self, *args):
-        self.set_class_age()
-        self.reset_viewer_limits()
-    
-    def _on_student_data_update(self, *args):
-        self.set_our_age()
-        self.reset_viewer_limits()
-    
+    def _on_data_update(self, msg):
+        if msg == STUDENT_DATA_LABEL:
+            self.set_our_age()
+            self.reset_viewer_limits()
+        elif msg == CLASS_DATA_LABEL:
+            if msg.data.size == 0:
+                return
+            if not self._class_layer_setup: 
+                self._setup_class_layer()
+            self.set_class_age()
+            self.reset_viewer_limits()
+
     def set_layers(self, labels, visible):
         prodata_viewer = self.get_viewer("prodata_viewer")
         for label in labels:
@@ -277,7 +283,7 @@ class StageFive(HubbleStage):
         if advancing:
             prodata_viewer = self.get_viewer("prodata_viewer")
         
-            if  new == "pro_dat1": # show hubble 1929 data. enable line fit tool
+            if new == "pro_dat1": # show hubble 1929 data. enable line fit tool
                 hubble_layer = prodata_viewer.layer_artist_for_data(self.get_data(HUBBLE_1929_DATA_LABEL))
                 hubble_layer.state.visible = True
                 prodata_viewer.toolbar.set_tool_enabled("hubble:linefit", True)
