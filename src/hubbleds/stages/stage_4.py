@@ -446,7 +446,7 @@ class StageThree(HubbleStage):
         if label == CLASS_DATA_LABEL and \
                 msg.data.size > 0 and \
                 not self._class_layer_setup:
-            self._setup_class_layer
+            self._setup_class_layer()
 
     def _update_viewer_style(self, dark):
         viewers = ['layer_viewer',
