@@ -80,6 +80,7 @@
             rows="1"
             label="New Most Likely Age"
             tag="new-most-likely-age"
+            type="uint"
           ></free-response>
         </v-col>
         <v-col>
@@ -157,6 +158,7 @@
             rows="1"
             label="New Likely Low Age"
             tag="new-likely-low-age"
+            type="uint"
           ></free-response>
         </v-col>
         <v-col
@@ -166,11 +168,16 @@
               <v-col
           cols="12"
           lg="3">
+
+          <!-- This > 3 rule makes no sense - it's just a test -->
           <free-response
             outlined
             rows="1"
             label="New Likely High Age"
             tag="new-likely-high-age"
+            type="uint"
+            :rules="[(input) => parseInt(input) > 3]"
+            help-message="Your value should be at least 3"
           ></free-response>
         </v-col>
         <v-col
