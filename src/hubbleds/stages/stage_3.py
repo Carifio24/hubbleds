@@ -376,7 +376,7 @@ class StageTwo(HubbleStage):
         if self.stage_state.marker in ['ang_siz2', 'est_dis3']:
             marker_index = self.stage_state.markers.index(self.stage_state.marker)
             new_index = marker_index - 1
-            self.stage_state.marker = self.stage_state.marker[new_index]
+            self.stage_state.marker = self.stage_state.markers[new_index]
         
         if self.stage_state.marker_reached('fil_rem1'):
             self.enable_distance_tool(True)
