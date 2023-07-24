@@ -1,5 +1,5 @@
 from collections import defaultdict, Counter
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 from math import floor
 from pathlib import Path
@@ -33,6 +33,7 @@ class HubblesLaw(Story):
     validation_failure_counts = DictCallbackProperty({})
     has_best_fit_galaxy = CallbackProperty(False)
     enough_students_ready = CallbackProperty(False)
+    started = CallbackProperty(datetime.now(tz=timezone.utc).timestamp())
 
     name_ext = ".fits"
 
