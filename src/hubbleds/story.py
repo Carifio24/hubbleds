@@ -33,12 +33,15 @@ class HubblesLaw(Story):
     validation_failure_counts = DictCallbackProperty({})
     has_best_fit_galaxy = CallbackProperty(False)
     enough_students_ready = CallbackProperty(False)
-    started = CallbackProperty(datetime.now(tz=timezone.utc).timestamp())
+    started = CallbackProperty()
 
     name_ext = ".fits"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # UNIX epoch time, in milliseconds
+        self.started = round(datetime.now(tz=timezone.utc).timestamp() * 1000)
 
         self._set_theme()
 
@@ -77,30 +80,6 @@ class HubblesLaw(Story):
             label=SDSS_DATA_LABEL,
             **galaxies_dict
         ))
-
-        # Load in the overall data
-        all_json = self._request_session.get(f"{API_URL}/{HUBBLE_ROUTE_PATH}/all-data").json()
-        all_measurements = all_json["measurements"]
-        for measurement in all_measurements:
-            measurement.update({"galaxy_id": measurement["galaxy"]["id"]})
-            measurement.pop("galaxy")
-            measurement.pop("student")
-        all_student_summaries = all_json["studentData"]
-        all_class_summaries = all_json["classData"]
-        all_data = Data(
-            label=ALL_DATA_LABEL,
-            **{ STATE_TO_MEAS.get(k, k) : [x[k] for x in all_measurements] for k in all_measurements[0] }
-        )
-        HubblesLaw.prune_none(all_data)
-        self.data_collection.append(all_data)
-        self.base_all_dict = None
-
-        all_student_summ_data = self.data_from_summaries(all_student_summaries, label=ALL_STUDENT_SUMMARIES_LABEL, id_key=STUDENT_ID_COMPONENT)
-        all_class_summ_data = self.data_from_summaries(all_class_summaries, label=ALL_CLASS_SUMMARIES_LABEL, id_key=CLASS_ID_COMPONENT)
-        self.data_collection.append(all_student_summ_data)
-        self.data_collection.append(all_class_summ_data)
-        for comp in [AGE_COMPONENT, H0_COMPONENT]:
-            self.app.add_link(all_student_summ_data, comp, all_class_summ_data, comp)
 
         # Compose empty data containers to be populated by user
         self.student_cols = [NAME_COMPONENT, RA_COMPONENT, DEC_COMPONENT, Z_COMPONENT,
@@ -186,6 +165,30 @@ class HubblesLaw(Story):
         v.theme.themes.light.warning = 'colors.deepOrange.accent4'
         #Alt Palette 1:  Y:FFBE0B, O:FB5607, Pi:FF006E, Pu:8338EC, Bl:3A86FF, LiBl:619EFF
 
+    def _fetch_all_data(self):
+        # Load in the overall data
+        all_json = requests.get(f"{API_URL}/{HUBBLE_ROUTE_PATH}/all-data{self.started}").json()
+        all_measurements = all_json["measurements"]
+        for measurement in all_measurements:
+            measurement.update({"galaxy_id": measurement["galaxy"]["id"]})
+            measurement.pop("galaxy")
+            measurement.pop("student")
+        all_student_summaries = all_json["studentData"]
+        all_class_summaries = all_json["classData"]
+        all_data = Data(
+            label=ALL_DATA_LABEL,
+            **{ STATE_TO_MEAS.get(k, k) : [x[k] for x in all_measurements] for k in all_measurements[0] }
+        )
+        HubblesLaw.prune_none(all_data)
+        self.data_collection.append(all_data)
+        self.base_all_dict = None
+
+        all_student_summ_data = self.data_from_summaries(all_student_summaries, label=ALL_STUDENT_SUMMARIES_LABEL, id_key=STUDENT_ID_COMPONENT)
+        all_class_summ_data = self.data_from_summaries(all_class_summaries, label=ALL_CLASS_SUMMARIES_LABEL, id_key=CLASS_ID_COMPONENT)
+        self.data_collection.append(all_student_summ_data)
+        self.data_collection.append(all_class_summ_data)
+        for comp in [AGE_COMPONENT, H0_COMPONENT]:
+            self.app.add_link(all_student_summ_data, comp, all_class_summ_data, comp)
 
     def load_spectrum_data(self, name, gal_type):
         if not name.endswith(self.name_ext):
@@ -686,4 +689,5 @@ class HubblesLaw(Story):
         self.fetch_student_data()
         self.fetch_class_data()
         self.fetch_example_galaxy_data()
+        self._fetch_all_data()
 
