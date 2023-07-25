@@ -552,7 +552,7 @@ class StageTwo(HubbleStage):
             self._update_state_from_measurements()
     
     @staticmethod
-    def add_point(viewer, x, color, label = None): 
+    def add_point(viewer, x, color, label=None): 
         scales = {'x': viewer.figure.scale_x, 'y': viewer.figure.scale_y}
         size = viewer.layers[0].bars.default_size 
         return  Scatter(x=[x], y=[1], 
@@ -584,7 +584,7 @@ class StageTwo(HubbleStage):
         index = int((x - bins[0])/bin_width)
         return bins[0] + bin_width * (index + 1/2)
     
-    def plot_measurement(self, viewer, index, distance = False, color = 'black', label = None):
+    def plot_measurement(self, viewer, index, distance=False, color='black', label=None):
         viewer = self.get_viewer(viewer)
         x = self.get_data(EXAMPLE_GALAXY_MEASUREMENTS)[ANGULAR_SIZE_COMPONENT][index]
         if distance:
@@ -703,6 +703,10 @@ class StageTwo(HubbleStage):
     
     #@print_function_name
     def _make_measurement(self):
+        # We don't want a student's data to change once they've reached stage 4
+        if self.story_state.max_stage_index >= 4:
+            return
+
         galaxy = self.stage_state.galaxy
         table = self.current_table
         data_label = table._glue_data.label
