@@ -22,10 +22,9 @@ from glue.core.data_factories.fits import fits_reader
 from glue.core.message import NumericalDataChangedMessage
 from glue.core.subset import CategorySubsetState
 
-from hubbleds.data.hubble_simulation.simulate import H0
 
 from .data_management import *
-from .utils import AGE_CONSTANT, H_ALPHA_REST_LAMBDA, HUBBLE_ROUTE_PATH, age_in_gyr_simple, fit_line, MG_REST_LAMBDA
+from .utils import H_ALPHA_REST_LAMBDA, HUBBLE_ROUTE_PATH, age_in_gyr_simple, fit_line, MG_REST_LAMBDA
 
 @story_registry(name="hubbles_law")
 class HubblesLaw(Story):
@@ -170,7 +169,7 @@ class HubblesLaw(Story):
 
     def _fetch_all_data(self):
         # Load in the overall data
-        all_json = requests.get(f"{API_URL}/{HUBBLE_ROUTE_PATH}/all-data{self.started}").json()
+        all_json = requests.get(f"{API_URL}/{HUBBLE_ROUTE_PATH}/all-data?before={self.started}").json()
         all_measurements = all_json["measurements"]
         for measurement in all_measurements:
             measurement.update({"galaxy_id": measurement["galaxy"]["id"]})
@@ -689,8 +688,10 @@ class HubblesLaw(Story):
         ]
         if any(self.student_user["id"] in r for r in ranges):
             app_state.update_db = False
+
+        self._fetch_all_data()
         self.fetch_student_data()
         self.fetch_class_data()
         self.fetch_example_galaxy_data()
-        self._fetch_all_data()
+
 
