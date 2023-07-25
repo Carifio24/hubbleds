@@ -1,11 +1,8 @@
 from astropy import units as u
 from astropy.modeling import models, fitting
-from numpy import pi
-from bqplot.marks import Lines
-from bqplot.scales import LinearScale
-from glue_jupyter.bqplot.histogram.layer_artist import \
-    BqplotHistogramLayerArtist
-from glue_jupyter.bqplot.scatter.layer_artist import BqplotScatterLayerArtist
+from numpy import argsort, pi
+
+from cosmicds.utils import mode, percent_around_center_indices
 
 try:
     from astropy.cosmology import Planck18 as planck
@@ -105,5 +102,25 @@ def format_measured_angle(angle):
 def velocity_from_wavelengths(lamb_meas, lamb_rest):
     return round((3 * (10 ** 5) * (lamb_meas / lamb_rest - 1)), 0)
 
+
 def distance_from_angular_size(theta):
     return round(DISTANCE_CONSTANT / theta, 0)
+
+
+def data_summary_for_component(data, component_id):
+    summary = {
+        "mean": data.compute_statistic('mean', component_id),
+        "median": data.compute_statistic('median', component_id),
+        "mode": mode(data, component_id),
+    }
+    values = data[component_id]
+    percents = [50, 68, 95]
+    sorted_indices = argsort(data)
+
+    for percent in percents:
+        bottom_index, top_index = percent_around_center_indices(data.size, percent)
+        bottom = values[sorted_indices[bottom_index]]
+        top = values[sorted_indices[top_index]]
+        summary[f"{percent}%"] = (bottom, top)
+
+    return summary

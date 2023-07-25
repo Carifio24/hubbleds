@@ -24,7 +24,7 @@ from glue.core.subset import CategorySubsetState
 
 
 from .data_management import *
-from .utils import H_ALPHA_REST_LAMBDA, HUBBLE_ROUTE_PATH, age_in_gyr_simple, fit_line, MG_REST_LAMBDA
+from .utils import H_ALPHA_REST_LAMBDA, HUBBLE_ROUTE_PATH, age_in_gyr_simple, data_summary_for_component, fit_line, MG_REST_LAMBDA
 
 @story_registry(name="hubbles_law")
 class HubblesLaw(Story):
@@ -36,6 +36,7 @@ class HubblesLaw(Story):
     enough_students_ready = CallbackProperty(False)
     started = CallbackProperty()
     class_data_students = ListCallbackProperty([])
+    class_data_info = DictCallbackProperty({})
 
     name_ext = ".fits"
 
@@ -133,16 +134,14 @@ class HubblesLaw(Story):
         self.class_data_timer = RepeatedTimer(30, self._on_timer)
         self.class_data_timer.start()
 
-        add_callback(self, 'max_stage_index', self._on_max_stage_index_changed)
+        add_callback(self, 'max_stage_index', self._on_max_stage_index_changed, echo_old=True)
 
-    def _on_max_stage_index_changed(self, value):
-        if value == 5:
+    def _on_max_stage_index_changed(self, old_value, value):
+        if old_value == 4 and value == 5:
             # Make sure that the classroom size is up-to-date
             res = requests.get(f"{API_URL}/class-for-student-story/{self.student_user['id']}/hubbles_law").json()
-            if res:
-                size = res["size"]
-                self.app_state.classroom["size"] = size
-                self.classroom["size"] = size
+            if res and "size" in res:
+                self.classroom["size"] = res["size"]
 
             # Fetch data one last time as the student starts stage 5
             # We need to do this on a max index change (rather than
@@ -154,6 +153,11 @@ class HubblesLaw(Story):
             class_data = self.data_collection[CLASS_DATA_LABEL]
             student_ids = set(class_data[STUDENT_ID_COMPONENT])
             self.class_data_students = list(student_ids)
+
+            # Calculate a few stats for the class data that the student is actually using
+            # This is for teachers to use to give a rough estimate of how appropriate
+            # the student's numerical answers are
+            self.class_data_info = data_summary_for_component(class_data, class_data.id[AGE_COMPONENT])
 
             # This is pretty important stuff for the student's state
             # so let's make sure that it gets saved 
@@ -183,7 +187,7 @@ class HubblesLaw(Story):
         v.theme.themes.light.warning = 'colors.deepOrange.accent4'
         #Alt Palette 1:  Y:FFBE0B, O:FB5607, Pi:FF006E, Pu:8338EC, Bl:3A86FF, LiBl:619EFF
 
-    def _fetch_all_data(self):
+    def _setup_all_data(self):
         # Load in the overall data
         all_json = requests.get(f"{API_URL}/{HUBBLE_ROUTE_PATH}/all-data?before={self.started}").json()
         all_measurements = all_json["measurements"]
@@ -650,48 +654,50 @@ class HubblesLaw(Story):
         if updated_data is not None:
             class_id = self.classroom["id"]
             self.update_summary_data(updated_data, CLASS_SUMMARY_LABEL, STUDENT_ID_COMPONENT)
-            all_data = self.data_collection[ALL_DATA_LABEL]
+            if ALL_DATA_LABEL in self.data_collection:
+                all_data = self.data_collection[ALL_DATA_LABEL]
 
-            # We can't do this when all_data is created
-            # because it seems that the classroom info hasn't been populated
-            if self.base_all_dict is None:
-                indices = all_data[CLASS_ID_COMPONENT] != self.classroom["id"]
-                self.base_all_dict = { k.label : all_data[k][indices] for k in all_data.main_components }
+                # We can't do this when all_data is created
+                # because it seems that the classroom info hasn't been populated
+                if self.base_all_dict is None:
+                    indices = all_data[CLASS_ID_COMPONENT] != self.classroom["id"]
+                    self.base_all_dict = { k.label : all_data[k][indices] for k in all_data.main_components }
 
-            all_dict = self.base_all_dict.copy()
-            all_dict[CLASS_ID_COMPONENT] = np.concatenate([all_dict[CLASS_ID_COMPONENT], [class_id] * len(updated_meas)]) 
-            for k in all_dict:
-                if k == CLASS_ID_COMPONENT:
-                    continue
-                all_dict[k] = np.concatenate([all_dict[k], [m[MEAS_TO_STATE.get(k, k)] for m in updated_meas]])
-            new_all = Data(label=all_data.label, **all_dict)
-            all_data.update_values_from_data(new_all)
-            HubblesLaw.prune_none(all_data)
+                all_dict = self.base_all_dict.copy()
+                all_dict[CLASS_ID_COMPONENT] = np.concatenate([all_dict[CLASS_ID_COMPONENT], [class_id] * len(updated_meas)])
+                for k in all_dict:
+                    if k == CLASS_ID_COMPONENT:
+                        continue
+                    all_dict[k] = np.concatenate([all_dict[k], [m[MEAS_TO_STATE.get(k, k)] for m in updated_meas]])
+                new_all = Data(label=all_data.label, **all_dict)
+                all_data.update_values_from_data(new_all)
+                HubblesLaw.prune_none(all_data)
 
             # We also need to update the all class summary data
-            dists = updated_data[DISTANCE_COMPONENT]
-            vels = updated_data[VELOCITY_COMPONENT]
-            h0, age = self.create_single_summary(dists, vels)
-            all_summ_data = self.data_collection[ALL_CLASS_SUMMARIES_LABEL]
-            index = next((i for i in range(all_summ_data.size) if all_summ_data[CLASS_ID_COMPONENT][i] == class_id), None)
-            if index is None:
-                self.add_data_values(
-                    data=all_summ_data,
-                    values={
-                        H0_COMPONENT: h0,
-                        AGE_COMPONENT: age,
-                        CLASS_ID_COMPONENT: class_id
-                    }
-                )
-            else:
-                h0s = all_summ_data[H0_COMPONENT]
-                ages = all_summ_data[AGE_COMPONENT]
-                h0s[index]= h0
-                ages[index]= age
-                all_summ_data.update_components({
-                    all_summ_data.id[H0_COMPONENT]: h0s,
-                    all_summ_data.id[AGE_COMPONENT]: ages
-                })
+            if ALL_CLASS_SUMMARIES_LABEL in self.data_collection:
+                dists = updated_data[DISTANCE_COMPONENT]
+                vels = updated_data[VELOCITY_COMPONENT]
+                h0, age = self.create_single_summary(dists, vels)
+                all_summ_data = self.data_collection[ALL_CLASS_SUMMARIES_LABEL]
+                index = next((i for i in range(all_summ_data.size) if all_summ_data[CLASS_ID_COMPONENT][i] == class_id), None)
+                if index is None:
+                    self.add_data_values(
+                        data=all_summ_data,
+                        values={
+                            H0_COMPONENT: h0,
+                            AGE_COMPONENT: age,
+                            CLASS_ID_COMPONENT: class_id
+                        }
+                    )
+                else:
+                    h0s = all_summ_data[H0_COMPONENT]
+                    ages = all_summ_data[AGE_COMPONENT]
+                    h0s[index]= h0
+                    ages[index]= age
+                    all_summ_data.update_components({
+                        all_summ_data.id[H0_COMPONENT]: h0s,
+                        all_summ_data.id[AGE_COMPONENT]: ages
+                    })
 
 
     def setup_for_student(self, app_state):
@@ -705,7 +711,7 @@ class HubblesLaw(Story):
         if any(self.student_user["id"] in r for r in ranges):
             app_state.update_db = False
 
-        self._fetch_all_data()
+        self._setup_all_data()
         self.fetch_student_data()
         self.fetch_class_data()
         self.fetch_example_galaxy_data()
