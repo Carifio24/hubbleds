@@ -149,6 +149,15 @@ class HubblesLaw(Story):
             # stage_index) so that this only happens once
             # Otherwise the student's stage 5 data will change!
             self.fetch_class_data()
+            
+            # Keep a record of which students' data is used in the class data
+            class_data = self.data_collection[CLASS_DATA_LABEL]
+            student_ids = set(class_data[STUDENT_ID_COMPONENT])
+            self.class_data_students = list(student_ids)
+
+            # This is pretty important stuff for the student's state
+            # so let's make sure that it gets saved 
+            self.write_to_db()
 
     def _on_timer(self):
         if self.max_stage_index < 5:
