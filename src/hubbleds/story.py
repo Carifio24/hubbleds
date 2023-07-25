@@ -12,7 +12,9 @@ from cosmicds.phases import Story
 from cosmicds.registries import story_registry
 from cosmicds.utils import API_URL, RepeatedTimer
 from dateutil.parser import isoparse
+
 from echo import DictCallbackProperty, CallbackProperty, add_callback
+from echo import DictCallbackProperty, CallbackProperty, ListCallbackProperty, add_callback
 from echo.callback_container import CallbackContainer
 from glue.core import Data
 from glue.core.component import CategoricalComponent, Component
@@ -34,6 +36,7 @@ class HubblesLaw(Story):
     has_best_fit_galaxy = CallbackProperty(False)
     enough_students_ready = CallbackProperty(False)
     started = CallbackProperty()
+    class_data_students = ListCallbackProperty([])
 
     name_ext = ".fits"
 
@@ -615,19 +618,19 @@ class HubblesLaw(Story):
             if students_ready >= min(10, self.classroom["size"]):
                 self.enough_students_ready = True
 
-    def fetch_class_data(self):
-        def check_update(measurements):
-            last_modified = max([isoparse(m[DB_LAST_MODIFIED_FIELD]) for m in measurements], default=None)
-            need_update = self.class_last_modified is None or last_modified is None or last_modified > self.class_last_modified
-            if need_update and last_modified is not None:
-                self.class_last_modified = last_modified
-            return need_update
+    def _check_class_data_need_update(self, measurements):
+        last_modified = max([isoparse(m[DB_LAST_MODIFIED_FIELD]) for m in measurements], default=None)
+        need_update = self.class_last_modified is None or last_modified is None or last_modified > self.class_last_modified
+        if need_update and last_modified is not None:
+            self.class_last_modified = last_modified
+        return need_update
 
+    def fetch_class_data(self):
         class_data_url = f"{API_URL}/{HUBBLE_ROUTE_PATH}/stage-3-data/{self.student_user['id']}/{self.classroom['id']}"
         if self.class_last_modified is not None:
             timestamp = floor(self.class_last_modified.timestamp() * 1000)
             class_data_url = f"{class_data_url}?last_checked={timestamp}"
-        updated_meas, updated_data = self.fetch_measurement_data_and_update(class_data_url, CLASS_DATA_LABEL, prune_none=True, update_if_empty=False, check_update=check_update)
+        updated_meas, updated_data = self.fetch_measurement_data_and_update(class_data_url, CLASS_DATA_LABEL, prune_none=True, update_if_empty=False, check_update=self._check_class_data_need_update)
         
         if updated_data is not None:
             class_id = self.classroom["id"]
