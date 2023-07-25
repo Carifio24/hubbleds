@@ -647,7 +647,6 @@ class StageTwo(HubbleStage):
         
         self.stage_state.galaxy = galaxy
         self.stage_state.galaxy_dist = None
-       #print('bool(galaxy)',bool(galaxy))
         self.distance_tool.measuring_allowed = bool(galaxy)
         self.stage_state.meas_theta = data[ANGULAR_SIZE_COMPONENT][index]
 
@@ -712,9 +711,6 @@ class StageTwo(HubbleStage):
                                       single=True)
         
         angular_size = self.distance_tool.angular_size
-        # ang_size_deg = angular_size.value
-        # distance = round(MILKY_WAY_SIZE_MPC * 180 / (ang_size_deg * pi))
-        # angular_size_as = round(angular_size.to(u.arcsec).value)
 
         index = table.index
         if index is None:
@@ -732,10 +728,6 @@ class StageTwo(HubbleStage):
 
         if (curr_value is None) and (data_label == STUDENT_MEASUREMENTS_LABEL):
             self.stage_state.angsizes_total = self.stage_state.angsizes_total + 1
-
-        # self.stage_state.galaxy_dist = distance
-        # self.update_data_value(STUDENT_MEASUREMENTS_LABEL, DISTANCE_COMPONENT, distance, index)
-        # self.update_data_value(STUDENT_MEASUREMENTS_LABEL, ANGULAR_SIZE_COMPONENT, angular_size_as, index)
 
         self.stage_state.meas_theta = round(angular_size.to(u.arcsec).value)
 
@@ -782,9 +774,6 @@ class StageTwo(HubbleStage):
                            filter=lambda msg: msg.data.label == EXAMPLE_GALAXY_MEASUREMENTS,
                            handler=v4_plot)
                     v4.toolbar.tools['bqplot:home'].activate()
-            
-
-        
 
         if data_label == STUDENT_MEASUREMENTS_LABEL:
             self.story_state.update_student_data()
@@ -801,7 +790,6 @@ class StageTwo(HubbleStage):
         if not change["new"]:
             return
         
-
         galaxy = self.state.galaxy
         if galaxy["id"]:
             data = {"galaxy_id": int(galaxy["id"])}
@@ -854,7 +842,6 @@ class StageTwo(HubbleStage):
         self.get_distance_count()
     
     def fill_table(self, table, tool=None):
-       #print("in fill_table")
         self.update_data_value(table._glue_data.label, ANGULAR_SIZE_COMPONENT, 35, 0)
         self.update_data_value(table._glue_data.label, DISTANCE_COMPONENT, distance_from_angular_size(35), 0)
 
@@ -864,7 +851,6 @@ class StageTwo(HubbleStage):
         self.update_distances(self.example_galaxy_distance_table)
 
     def vue_fill_table(self, _args):
-       #print("in vue_fill_table")
         self.fill_table(self.example_galaxy_distance_table)
     
     #@print_function_name
