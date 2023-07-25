@@ -136,11 +136,18 @@ class HubblesLaw(Story):
         add_callback(self, 'max_stage_index', self._on_max_stage_index_changed)
 
     def _on_max_stage_index_changed(self, value):
-        # Fetch data one last time as the student starts stage 5
-        # We need to do this on a max index change (rather than
-        # stage_index) so that this only happens once
-        # Otherwise the student's stage 5 data will change!
         if value == 5:
+            # Make sure that the classroom size is up-to-date
+            res = requests.get(f"{API_URL}/class-for-student-story/{self.student_user['id']}/hubbles_law").json()
+            if res:
+                size = res["size"]
+                self.app_state.classroom["size"] = size
+                self.classroom["size"] = size
+
+            # Fetch data one last time as the student starts stage 5
+            # We need to do this on a max index change (rather than
+            # stage_index) so that this only happens once
+            # Otherwise the student's stage 5 data will change!
             self.fetch_class_data()
 
     def _on_timer(self):
