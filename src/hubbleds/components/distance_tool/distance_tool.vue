@@ -69,17 +69,17 @@
         {{ measuring ? 'Stop measuring' : 'Start measuring' }}
       </v-tooltip>
     </div>
-            <contrast-brightness-control 
-                inlineStyle="padding: 0.5em 0;"
-                :enabled=true  
-                :showContrast=false
-                :reset="reset_style"
-                @change_style="new_brightness_contrast => {this.wwtStyle = new_brightness_contrast}"
-                @change_brightness="(new_brightness) => { $emit('brightness', new_brightness)}"
-                @change_contrast="(new_contrast) => { $emit('contrast', new_contrast)}"
-                />
-                
-                <!-- add inline style to control using inline css like inlineStyle="border: 1px solid white" -->
+    <contrast-brightness-control 
+        inlineStyle="padding: 0.5em 0;"
+        :enabled=true  
+        :showContrast=false
+        :reset="reset_style"
+        @change_style="new_brightness_contrast => this.wwtStyle = new_brightness_contrast"
+        @change_brightness="(new_brightness) => $emit('brightness', new_brightness)"
+        @change_contrast="(new_contrast) => $emit('contrast', new_contrast)"
+        />
+        
+        <!-- add inline style to control using inline css like inlineStyle="border: 1px solid white" -->
   </v-card>
 </template>
 
@@ -201,6 +201,7 @@ export default {
       this.lineCreated = false;
       this.measuredDistance = 0;
       this.measuring = false;
+      this.hasMovedWhileDrawing = false;
 
       // Set the canvas handlers
       this.canvas.onmousemove = null;
@@ -243,13 +244,30 @@ export default {
     handleMouseDown: function(event) {
       this.mouseDown = true;
 
-      // If we aren't on one of the endpoints,
+      // If we aren't drawing the line
+      // and we aren't on one of the endpoints,
       // then we're done here
-      if (!(this.onStart || this.onEnd)) {
+      if (!this.shouldFollowMouse && !(this.onStart || this.onEnd)) {
         event.stopImmediatePropagation();
         return;
       }
 
+      // If we've already setthe first endpoint,
+      // we now want to set the second
+      if (this.shouldFollowMouse) {
+
+        // If the user didn't move between clicks, don't
+        // count these as line endpoints
+
+        this.endPoint = this.position(event);
+        this.clearCanvas();
+        this.drawLine(this.startPoint, this.endPoint);
+        this.drawEndcaps(this.startPoint, this.endPoint);
+        this.updateMeasuredDistance();
+        return;
+      }
+
+      // Otherwise, we've already drawn the line and are grabbing
       // To make things easier, we define the point that
       // isn't being modified as the 'start' point
       if (this.onStart) {
@@ -269,13 +287,6 @@ export default {
 
     handleMouseUp: function(event) {
       this.mouseDown = false;
-      if (this.shouldFollowMouse) {
-        this.endPoint = this.position(event);
-        this.clearCanvas();
-        this.drawLine(this.startPoint, this.endPoint);
-        this.drawEndcaps(this.startPoint, this.endPoint);
-        this.updateMeasuredDistance();
-      }
       this.canvas.classList.remove(this.grabbingClass);
       this.mouseMoving = false;
       this.shouldFollowMouse = false;
@@ -283,7 +294,8 @@ export default {
 
     handleMouseMove: function(event) {
       this.mouseMoving = true;
-      if (this.shouldFollowMouse && this.mouseDown) {
+      if (this.shouldFollowMouse) {
+        this.hasMovedWhileDrawing = true;
         this.lineFollow(event, true);
       } else {
         this.lookForEndpoints(event);
