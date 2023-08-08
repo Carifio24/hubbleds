@@ -229,6 +229,13 @@ export default {
 
       // If we haven't put the second point down
       } else if (this.endPoint === null) {
+
+        // If we haven't moved since we put the first point down, reset
+        if (!this.hasMovedWhileDrawing) {
+          this.startPoint = null;
+          return;
+        }
+
         this.endPoint = coordinates;
         this.clearCanvas();
         this.drawLine(this.startPoint, this.endPoint);
@@ -270,6 +277,13 @@ export default {
     },
 
     handleMouseUp: function(event) {
+      if (this.lineCreated && this.shouldFollowMouse) {
+        const coordinates = this.position(event);
+        this.endPoint = this.position(event);
+        this.clearCanvas();
+        this.drawLine(this.startPoint, this.endPoint);
+        this.drawEndcaps(this.startPoint, this.endPoint);
+      }
       this.mouseDown = false;
       this.canvas.classList.remove(this.grabbingClass);
       this.mouseMoving = false;
@@ -281,7 +295,7 @@ export default {
       if (this.shouldFollowMouse) {
         this.hasMovedWhileDrawing = true;
         this.lineFollow(event, true);
-      } else {
+      } else if (this.startPoint && this.endPoint) {
         this.lookForEndpoints(event);
       }
     },
@@ -351,6 +365,7 @@ export default {
 
     lineFollow: function(event, requireMouseDown) {
       this.mouseMoving = true;
+      this.hasMovedWhileDrawing = true;
       if (requireMouseDown && !this.mouseDown) { return; }
       const coordinates = this.position(event);
       this.clearCanvas();
