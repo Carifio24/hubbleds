@@ -204,9 +204,9 @@ export default {
       this.hasMovedWhileDrawing = false;
 
       // Set the canvas handlers
-      this.canvas.onmousemove = null;
+      this.canvas.onmousemove = this.handleMouseMove;
       this.canvas.onmousedown = this.addInitialPoint;
-      this.canvas.onmouseup = this.addInitialPoint;
+      this.canvas.onmouseup = null;
 
       // Clear the canvas, if necessary
       this.clearCanvas();
@@ -247,27 +247,11 @@ export default {
       // If we aren't drawing the line
       // and we aren't on one of the endpoints,
       // then we're done here
-      if (!this.shouldFollowMouse && !(this.onStart || this.onEnd)) {
+      if (!(this.onStart || this.onEnd)) {
         event.stopImmediatePropagation();
         return;
       }
 
-      // If we've already setthe first endpoint,
-      // we now want to set the second
-      if (this.shouldFollowMouse) {
-
-        // If the user didn't move between clicks, don't
-        // count these as line endpoints
-
-        this.endPoint = this.position(event);
-        this.clearCanvas();
-        this.drawLine(this.startPoint, this.endPoint);
-        this.drawEndcaps(this.startPoint, this.endPoint);
-        this.updateMeasuredDistance();
-        return;
-      }
-
-      // Otherwise, we've already drawn the line and are grabbing
       // To make things easier, we define the point that
       // isn't being modified as the 'start' point
       if (this.onStart) {
