@@ -139,7 +139,7 @@ class HubblesLaw(Story):
     def _on_max_stage_index_changed(self, old_value, value):
         if old_value == 4 and value == 5:
             # Make sure that the classroom size is up-to-date
-            res = requests.get(f"{API_URL}/class-for-student-story/{self.student_user['id']}/hubbles_law").json()
+            res = self._request_session.get(f"{API_URL}/class-for-student-story/{self.student_user['id']}/hubbles_law").json()
             if res and "size" in res:
                 self.classroom["size"] = res["size"]
 
@@ -189,7 +189,7 @@ class HubblesLaw(Story):
 
     def _setup_all_data(self):
         # Load in the overall data
-        all_json = requests.get(f"{API_URL}/{HUBBLE_ROUTE_PATH}/all-data?before={self.started}").json()
+        all_json = self._request_session.get(f"{API_URL}/{HUBBLE_ROUTE_PATH}/all-data?before={self.started}").json()
         all_measurements = all_json["measurements"]
         for measurement in all_measurements:
             measurement.update({"galaxy_id": measurement["galaxy"]["id"]})
