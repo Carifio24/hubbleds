@@ -203,8 +203,8 @@ class HubblesLaw(Story):
             response = self._request_session.get(url)
             f = BytesIO(response.content)
             f.name = name
-            hdulist = fits.open(f)
-            data = next((d for d in fits_reader(hdulist) if d.label == data_name), None)
+            with fits.open(f) as hdulist:
+                data = next((d for d in fits_reader(hdulist) if d.label == data_name), None)
             if data is None:
                 return
             data.label = name
