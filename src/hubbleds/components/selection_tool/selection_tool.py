@@ -91,7 +91,7 @@ class SelectionTool(v.VueTemplate):
         super().__init__(*args, **kwargs)
 
     def show_galaxies(self, show=True):
-        def after_mounted1():
+        def after_ready1():
             sleep(.1)
             print('adding galaxies layers')
             if show and self.sdss_layer is None:
@@ -103,7 +103,7 @@ class SelectionTool(v.VueTemplate):
             elif not show:
                 self.widget.layers.remove_layer(self.sdss_layer)
                 self.sdss_layer = None
-        self.widget.ensure_mounted(after_mounted1)
+        self.widget.ensure_ready(after_ready1)
     
     @property
     def on_galaxy_selected(self):
@@ -123,7 +123,7 @@ class SelectionTool(v.VueTemplate):
         self.selected = False
 
     def _create_selected_layer(self):
-        def after_mounted2():
+        def after_ready2():
             print('creating selected layer')
             sleep(.1)
             self.table = Table.from_pandas(self.selected_data)
@@ -134,7 +134,7 @@ class SelectionTool(v.VueTemplate):
             if self.selected_layer is not None:
                 self.widget.layers.remove_layer(self.selected_layer)
             self.selected_layer = layer
-        self.widget.ensure_mounted(after_mounted2)
+        self.widget.ensure_ready(after_ready2)
 
     def vue_select_current_galaxy(self, _args=None):
         self.select_galaxy(self.current_galaxy)
