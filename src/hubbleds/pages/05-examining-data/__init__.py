@@ -6,6 +6,7 @@ from glue.core import Data
 from glue_jupyter import JupyterApplication
 from glue_jupyter.bqplot.scatter import BqplotScatterView
 from glue_plotly.viewers.histogram import PlotlyHistogramView 
+from glue_plotly.viewers.scatter import PlotlyScatterView 
 from pathlib import Path
 from reacton import ipyvuetify as rv
 
@@ -16,8 +17,6 @@ from .component_state import ComponentState, Marker
 GUIDELINE_ROOT = Path(__file__).parent / "guidelines"
 
 component_state = ComponentState()
-
-
 
 
 @solara.component
@@ -62,9 +61,11 @@ def Page():
         test_data = Data(x=[1,2,3,4,5], y=[1,4,9,16,26])
         test_data.style.color = "red"
         gjapp.data_collection.append(test_data)
-        gjapp.new_data_viewer("plotly_histogram", data=test_data, show=False)
+        gjapp.new_data_viewer(PlotlyScatterView, data=test_data, show=False)
         return gjapp 
     gjapp = solara.use_memo(glue_setup, [])
+
+    test = solara.use_reactive(False)
 
     # Custom vue-only components have to be registered in the Page element
     #  currently, otherwise they will not be available in the front-end
@@ -104,5 +105,10 @@ def Page():
                 show=component_state.is_current_step(Marker.cla_dat1),
             )
 
+        def toggle_viewer():
+            test.value = not test.value
+
         with rv.Col(cols=8):
-            GridViewer(viewer=gjapp.viewers[0])
+            if test.value:
+                GridViewer(viewer=gjapp.viewers[0])
+            solara.Button("Testing", on_click=toggle_viewer)
