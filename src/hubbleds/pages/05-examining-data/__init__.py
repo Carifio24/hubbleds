@@ -1,10 +1,11 @@
 import solara
 from cosmicds import load_custom_vue_components
-from cosmicds.components import ScaffoldAlert, ViewerLayout
+from cosmicds.components import ScaffoldAlert
+from cosmicds.widgets.viewer_layout import ViewerLayout
 from glue.core import Data
 from glue_jupyter import JupyterApplication
 from glue_jupyter.bqplot.scatter import BqplotScatterView
-from glue_plotly.viewers.scatter import PlotlyScatterView 
+from glue_plotly.viewers.histogram import PlotlyHistogramView 
 from pathlib import Path
 from reacton import ipyvuetify as rv
 
@@ -16,17 +17,55 @@ GUIDELINE_ROOT = Path(__file__).parent / "guidelines"
 
 component_state = ComponentState()
 
-gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
 
-test_data = Data(x=[1,2,3,4,5], y=[1,4,9,16,26])
-test_data.style.color = "red"
-GLOBAL_STATE.data_collection.append(test_data)
-viewer = gjapp.new_data_viewer(PlotlyScatterView, data=test_data)
-layer = viewer.layers[0]
-layer.state.size = 30
+
+
+@solara.component
+def ToolBar(viewer):
+    solara.Row(
+        children=[
+            viewer.toolbar,
+            solara.v.Spacer(),
+        ],
+        margin=2,
+        style={"align-items": "center"},
+    )
+
+
+@solara.component
+def GridViewer(viewer):
+    viewer.figure_widget.layout.height = 600
+    layout = solara.Column(
+        children=[
+            ToolBar(viewer),
+            viewer.figure_widget,
+        ],
+        margin=0,
+        style={
+            "height": "100%",
+            "box-shadow": "0 3px 1px -2px rgba(0,0,0,.2),0 2px 2px 0 rgba(0,0,0,.14),0 1px 5px 0 rgba(0,0,0,.12) !important;",
+        },
+        classes=["elevation-2"],
+    )
+    with solara.Card(
+        title="Viewer Card",
+        children=[layout]
+    ):
+        pass
+
 
 @solara.component
 def Page():
+
+    def glue_setup():
+        gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
+        test_data = Data(x=[1,2,3,4,5], y=[1,4,9,16,26])
+        test_data.style.color = "red"
+        gjapp.data_collection.append(test_data)
+        gjapp.new_data_viewer("plotly_histogram", data=test_data, show=False)
+        return gjapp 
+    gjapp = solara.use_memo(glue_setup, [])
+
     # Custom vue-only components have to be registered in the Page element
     #  currently, otherwise they will not be available in the front-end
     load_custom_vue_components()
@@ -66,4 +105,4 @@ def Page():
             )
 
         with rv.Col(cols=8):
-            ViewerLayout(viewer=viewer)
+            GridViewer(viewer=gjapp.viewers[0])
