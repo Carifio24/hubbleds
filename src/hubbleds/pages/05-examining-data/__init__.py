@@ -1,12 +1,11 @@
 import solara
 from cosmicds import load_custom_vue_components
 from cosmicds.components import ScaffoldAlert
+from cosmicds.viewers import CDSScatterView
 from cosmicds.widgets.viewer_layout import ViewerLayout
 from glue.core import Data
 from glue_jupyter import JupyterApplication
 from glue_jupyter.bqplot.scatter import BqplotScatterView
-from glue_plotly.viewers.histogram import PlotlyHistogramView 
-from glue_plotly.viewers.scatter import PlotlyScatterView 
 from pathlib import Path
 from reacton import ipyvuetify as rv
 
@@ -61,7 +60,9 @@ def Page():
         test_data = Data(x=[1,2,3,4,5], y=[1,4,9,16,26])
         test_data.style.color = "red"
         gjapp.data_collection.append(test_data)
-        gjapp.new_data_viewer(PlotlyScatterView, data=test_data, show=False)
+        viewer = gjapp.new_data_viewer(CDSScatterView, data=test_data, show=False)
+        layer = viewer.layers[0]
+        layer.state.size = 25
         return gjapp 
     gjapp = solara.use_memo(glue_setup, [])
 
