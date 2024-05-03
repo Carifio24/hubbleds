@@ -1,8 +1,7 @@
 import solara
 from cosmicds import load_custom_vue_components
-from cosmicds.components import ScaffoldAlert
+from cosmicds.components.scaffold_alert import ScaffoldAlert
 from cosmicds.viewers import CDSScatterView
-from cosmicds.widgets.viewer_layout import ViewerLayout
 from glue.core import Data
 from glue_jupyter import JupyterApplication
 from glue_jupyter.bqplot.scatter import BqplotScatterView
@@ -46,7 +45,7 @@ def GridViewer(viewer):
         classes=["elevation-2"],
     )
     with solara.Card(
-        title="Viewer Card",
+        title=viewer.state.title,
         children=[layout]
     ):
         pass
