@@ -57,7 +57,7 @@ def Page():
     def glue_setup():
         gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
         test_data = Data(x=[1,2,3,4,5], y=[1,4,9,16,26])
-        test_data.style.color = "red"
+        test_data.style.color = "blue"
         gjapp.data_collection.append(test_data)
         viewer = gjapp.new_data_viewer(CDSScatterView, data=test_data, show=False)
         layer = viewer.layers[0]
