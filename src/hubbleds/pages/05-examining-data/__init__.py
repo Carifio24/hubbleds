@@ -8,6 +8,8 @@ from glue_jupyter.bqplot.scatter import BqplotScatterView
 from pathlib import Path
 from reacton import ipyvuetify as rv
 
+from hubbleds.components.id_slider import IdSlider
+
 from ...state import GLOBAL_STATE, LOCAL_STATE
 from .component_state import ComponentState, Marker
 
@@ -138,4 +140,12 @@ def Page():
         with rv.Col(cols=8):
             if test.value:
                 GridViewer(viewer=gjapp.viewers[0])
+                test_data = gjapp.data_collection[0]
+                IdSlider(gjapp=gjapp,
+                         data=test_data,
+                         on_id=None,
+                         highlight_ids=[1],
+                         id_component=test_data.id['x'],
+                         value_component=test_data.id['y'],
+                )
             solara.Button("Testing", on_click=toggle_viewer)
