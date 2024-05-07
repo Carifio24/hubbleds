@@ -146,4 +146,8 @@ class ComponentState:
     @computed_property
     def fin_cla1_gate(self):
         return True
+
+    @computed_property
+    def cla_res1_gate(self):
+        return True
     

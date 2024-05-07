@@ -82,28 +82,55 @@ def Page():
         f"Can advance: {component_state.can_transition(next=True)}"
     )
 
+    def transition_next(*args):
+        component_state.transition_next()
+
+    def transition_previous(*args):
+        component_state.transition_previous()
+
     with rv.Row():
         with rv.Col(cols=4):
             ScaffoldAlert(
                 GUIDELINE_ROOT / "GuidelineRandomVariability.vue",
-                event_next_callback=lambda *args: component_state.transition_next(),
+                event_next_callback=transition_next,
                 can_advance=component_state.can_transition(next=True),
                 show=component_state.is_current_step(Marker.ran_var1),
             )
             ScaffoldAlert(
                 GUIDELINE_ROOT / "GuidelineFinishedClassmates.vue",
-                event_next_callback=lambda *args: component_state.transition_next(),
-                event_back_callback=lambda *args: component_state.transition_previous(),
+                event_next_callback=transition_next,
+                event_back_callback=transition_previous,
                 can_advance=component_state.can_transition(next=True),
                 show=component_state.is_current_step(Marker.fin_cla1),
+                state_view={
+                    "class_data_size": 10  # TODO: This is a placeholder
+                }
             )
             ScaffoldAlert(
-                GUIDELINE_ROOT / "GuidelineClassData.vue",
-                event_next_callback=lambda *args: component_state.transition_next(),
-                event_back_callback=lambda *args: component_state.transition_previous(),
+                GUIDELINE_ROOT / "GuidelineClassmatesResults.vue",
+                event_next_callback=transition_next,
+                event_back_callback=transition_previous,
                 can_advance=component_state.can_transition(next=True),
-                show=component_state.is_current_step(Marker.cla_dat1),
+                show=component_state.is_current_step(Marker.cla_res1),
+                state_view={
+                    "class_data_size": 10  # TODO: This is a placeholder
+                }
             )
+            ScaffoldAlert(
+                GUIDELINE_ROOT / "GuidelineRelationshipAgeSlopeMC.vue",
+                event_next_callback=transition_next,
+                event_back_callback=transition_previous,
+                can_advance=component_state.can_transition(next=True),
+                show=component_state.is_current_step(Marker.rel_age1)
+            )
+            ScaffoldAlert(
+                GUIDELINE_ROOT / "GuidelineClassAgeRange.vue",
+                event_next_callback=transition_next,
+                event_back_callback=transition_previous,
+                can_advance=component_state.can_transition(next=True),
+                show=component_state.is_current_step(Marker.cla_age1)
+            )
+
 
         def toggle_viewer():
             test.value = not test.value
