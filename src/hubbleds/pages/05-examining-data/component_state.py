@@ -1,4 +1,5 @@
 import dataclasses
+from hubbleds.decorators import computed_property
 from solara import Reactive
 import enum
 
@@ -103,6 +104,7 @@ class ComponentState:
     current_step: Reactive[Marker] = dataclasses.field(default=Reactive(Marker.ran_var1))
 
     def is_current_step(self, step: Marker):
+        print(step, self.current_step.value == step)
         return self.current_step.value == step
 
     def can_transition(self, step: Marker=None, next=False, prev=False):
@@ -136,4 +138,12 @@ class ComponentState:
     def transition_previous(self):
         previous_marker = Marker.previous(self.current_step.value)
         self.transition_to(previous_marker, force=True)
+
+    @computed_property
+    def ran_var1_gate(self):
+        return True
+
+    @computed_property
+    def fin_cla1_gate(self):
+        return True
     

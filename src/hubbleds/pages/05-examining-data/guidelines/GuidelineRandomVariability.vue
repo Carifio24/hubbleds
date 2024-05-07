@@ -3,6 +3,7 @@
     title-text="Random Variability"
     @next="next_callback()"
     :allow-back="false"
+    :can-advance="true"
   >
     <div
       class="mb-4"
