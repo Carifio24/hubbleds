@@ -20,11 +20,10 @@ def IdSlider(gjapp,
              on_id,
              default_color="#3A86FF",
              highlight_color="#FB5607",
-             highlight_ids=None):
+             highlight_ids=None,
+):
 
     def _sort_key(id):
-        print(glue_data[id_component])
-        print(id)
         idx = where(glue_data[id_component] == id)[0][0]
         return glue_data[value_component][idx]
 
@@ -47,8 +46,10 @@ def IdSlider(gjapp,
         values.set(sorted(data[value_component]))
         ids.set(sorted(data[id_component], key=_sort_key))
         vmax = len(values.value) - 1
-        half_vmax = vmax / 2 if vmax % 2 == 0 else (vmax + 1) / 2
-        tick_labels.set(["Low"] + ["" for _ in range(int(half_vmax)-1)] + ["Age (Gyr)"]  + ["" for _ in range(int(half_vmax)-2)] + ["High"])
+        vmax_even = vmax % 2 == 0
+        half_vmax = vmax / 2 if vmax_even else (vmax + 1) / 2
+        upper_blanks_offset = 1 if vmax_even else 2
+        tick_labels.set(["Low"] + ["" for _ in range(int(half_vmax)-1)] + ["Age (Gyr)"]  + ["" for _ in range(int(half_vmax)-upper_blanks_offset)] + ["High"])
         if selected_id in ids.value:
             selected_value.set(values.value[ids.value.index(selected_id)])
 
@@ -57,13 +58,16 @@ def IdSlider(gjapp,
         set_index(index)
         selected_id = glue_data[id_component][index]
         selected_value.set(glue_data[value_component][index])
+        highlight = selected_id in highlight_ids
+        color.set(highlight_color if highlight else default_color)
+        if on_id is not None:
+            on_id(selected_id, highlight)
 
         print(selected_id)
         print(highlight_ids)
-        highlight = selected_id in highlight_ids
-        color.set(highlight_color if highlight else default_color)
 
     # TODO: Who should the subscriber be?
+    # Is there a reason that it shouldn't be the data collection?
     gjapp.data_collection.hub.subscribe(gjapp.data_collection, NumericalDataChangedMessage, handler=_on_data_update)
     
     _on_index(index)
@@ -80,8 +84,11 @@ def IdSlider(gjapp,
         max=len(values.value)-1,
         dense=False,
         hide_details=True,
-        thumb_label=True,
-        persistent_hint=True,
+        thumb_label="always",
         color=color.value,
+        v_slots=[{
+            "name": "thumb-label",
+            "children": solara.Text(str(round(values.value[index])))
+        }]
     )
 

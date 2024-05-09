@@ -1,8 +1,9 @@
 import solara
 from cosmicds import load_custom_vue_components
-from cosmicds.components.scaffold_alert import ScaffoldAlert
+from cosmicds.components import ScaffoldAlert, ViewerLayout
 from cosmicds.viewers import CDSScatterView
-from glue.core import Data
+from glue.core import Data, data_collection
+from glue.core.subset import RangeSubsetState
 from glue_jupyter import JupyterApplication
 from glue_jupyter.bqplot.scatter import BqplotScatterView
 from pathlib import Path
@@ -20,52 +21,30 @@ component_state = ComponentState()
 
 
 @solara.component
-def ToolBar(viewer):
-    solara.Row(
-        children=[
-            viewer.toolbar,
-            solara.v.Spacer(),
-        ],
-        margin=2,
-        style={"align-items": "center"},
-    )
-
-
-@solara.component
-def GridViewer(viewer):
-    viewer.figure_widget.layout.height = 600
-    layout = solara.Column(
-        children=[
-            ToolBar(viewer),
-            viewer.figure_widget,
-        ],
-        margin=0,
-        style={
-            "height": "100%",
-            "box-shadow": "0 3px 1px -2px rgba(0,0,0,.2),0 2px 2px 0 rgba(0,0,0,.14),0 1px 5px 0 rgba(0,0,0,.12) !important;",
-        },
-        classes=["elevation-2"],
-    )
-    with solara.Card(
-        title=viewer.state.title,
-        children=[layout]
-    ):
-        pass
-
-
-@solara.component
 def Page():
 
     def glue_setup():
         gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
-        test_data = Data(x=[1,2,3,4,5], y=[1,4,9,16,26])
-        test_data.style.color = "blue"
-        gjapp.data_collection.append(test_data)
-        viewer = gjapp.new_data_viewer(CDSScatterView, data=test_data, show=False)
-        layer = viewer.layers[0]
-        layer.state.size = 25
         return gjapp 
     gjapp = solara.use_memo(glue_setup, [])
+
+    test_data = Data(x=[1,2,3,4,5], y=[1,4,9,16,25])
+    test_data.style.color = "blue"
+    default_color = "#3A86FF"
+    highlight_color = "#D4AF37"
+    if len(test_data.subsets) == 0:
+        test_subset = test_data.new_subset(label="test_subset")
+    else:
+        test_subset = test_data.subsets[0]
+    if test_data not in gjapp.data_collection:
+        gjapp.data_collection.append(test_data)
+    viewer = gjapp.new_data_viewer(CDSScatterView, data=test_data, show=False)
+    viewer.state.x_att = test_data.id['x']
+    viewer.state.y_att = test_data.id['y']
+    layer = viewer.layers[0]
+    layer.state.size = 25
+    layer.state.visible = False
+    viewer.add_subset(test_subset)
 
     test = solara.use_reactive(False)
 
@@ -137,15 +116,24 @@ def Page():
         def toggle_viewer():
             test.value = not test.value
 
+
+        def update_test_subset(id, highlighted):
+            print("Updating test subset")
+            test_subset.subset_state = RangeSubsetState(id, id, test_data.id['x'])
+            color = highlight_color if highlighted else default_color
+            test_subset.style.color = color
+
         with rv.Col(cols=8):
             if test.value:
-                GridViewer(viewer=gjapp.viewers[0])
+                ViewerLayout(viewer=gjapp.viewers[0])
                 test_data = gjapp.data_collection[0]
                 IdSlider(gjapp=gjapp,
                          data=test_data,
-                         on_id=None,
+                         on_id=update_test_subset,
                          highlight_ids=[1],
                          id_component=test_data.id['x'],
                          value_component=test_data.id['y'],
+                         default_color=default_color,
+                         highlight_color=highlight_color,
                 )
             solara.Button("Testing", on_click=toggle_viewer)
