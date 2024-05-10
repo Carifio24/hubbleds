@@ -23,28 +23,32 @@ component_state = ComponentState()
 @solara.component
 def Page():
 
+    default_color = "#3A86FF"
+    highlight_color = "#FF5A00"
+
     def glue_setup():
         gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
-        return gjapp 
-    gjapp = solara.use_memo(glue_setup, [])
+        test_data = Data(x=[1,2,3,4,5], y=[1,4,9,16,25])
+        test_data.style.color = "green"
+        test_data.style.alpha = 0.5
+    
+        if len(test_data.subsets) == 0:
+            test_subset = test_data.new_subset(label="test_subset", alpha=1, markersize=10)
+        else:
+            test_subset = test_data.subsets[0]
+        if test_data not in gjapp.data_collection:
+            gjapp.data_collection.append(test_data)
+        viewer = gjapp.new_data_viewer(CDSScatterView, data=test_data, show=False)
+        viewer.state.x_att = test_data.id['x']
+        viewer.state.y_att = test_data.id['y']
+        layer = viewer.layers[0]
+        layer.state.size = 25
+        layer.state.visible = False
+        viewer.add_subset(test_subset)
+        return gjapp, viewer, test_data, test_subset 
 
-    test_data = Data(x=[1,2,3,4,5], y=[1,4,9,16,25])
-    test_data.style.color = "blue"
-    default_color = "#3A86FF"
-    highlight_color = "#D4AF37"
-    if len(test_data.subsets) == 0:
-        test_subset = test_data.new_subset(label="test_subset")
-    else:
-        test_subset = test_data.subsets[0]
-    if test_data not in gjapp.data_collection:
-        gjapp.data_collection.append(test_data)
-    viewer = gjapp.new_data_viewer(CDSScatterView, data=test_data, show=False)
-    viewer.state.x_att = test_data.id['x']
-    viewer.state.y_att = test_data.id['y']
-    layer = viewer.layers[0]
-    layer.state.size = 25
-    layer.state.visible = False
-    viewer.add_subset(test_subset)
+
+    gjapp, viewer, test_data, test_subset = solara.use_memo(glue_setup, [])
 
     test = solara.use_reactive(False)
 
@@ -118,7 +122,6 @@ def Page():
 
 
         def update_test_subset(id, highlighted):
-            print("Updating test subset")
             test_subset.subset_state = RangeSubsetState(id, id, test_data.id['x'])
             color = highlight_color if highlighted else default_color
             test_subset.style.color = color

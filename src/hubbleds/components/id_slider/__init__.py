@@ -42,7 +42,6 @@ def IdSlider(gjapp,
             _refresh(msg.data)
 
     def _refresh(data):
-        print("Slider refresh")
         values.set(sorted(data[value_component]))
         ids.set(sorted(data[id_component], key=_sort_key))
         vmax = len(values.value) - 1
@@ -54,7 +53,6 @@ def IdSlider(gjapp,
             selected_value.set(values.value[ids.value.index(selected_id)])
 
     def _on_index(index):
-        print("In _on_index")
         set_index(index)
         selected_id = glue_data[id_component][index]
         selected_value.set(glue_data[value_component][index])
@@ -63,17 +61,12 @@ def IdSlider(gjapp,
         if on_id is not None:
             on_id(selected_id, highlight)
 
-        print(selected_id)
-        print(highlight_ids)
-
     # TODO: Who should the subscriber be?
     # Is there a reason that it shouldn't be the data collection?
     gjapp.data_collection.hub.subscribe(gjapp.data_collection, NumericalDataChangedMessage, handler=_on_data_update)
     
     _on_index(index)
     _refresh(data)
-    print("TICKS")
-    print(tick_labels.value)
 
     return rv.Slider(
         v_model=index,
