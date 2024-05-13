@@ -102,6 +102,8 @@ class AgeCalcState:
 @dataclasses.dataclass
 class ComponentState:
     current_step: Reactive[Marker] = dataclasses.field(default=Reactive(Marker.ran_var1))
+    student_low_age: Reactive[int] = dataclasses.field(default=Reactive(0))
+    student_high_age: Reactive[int] = dataclasses.field(default=Reactive(0))
 
     def is_current_step(self, step: Marker):
         print(step, self.current_step.value == step)

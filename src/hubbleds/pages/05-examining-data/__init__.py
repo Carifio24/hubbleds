@@ -115,6 +115,54 @@ def Page():
                 can_advance=component_state.can_transition(next=True),
                 show=component_state.is_current_step(Marker.cla_age1)
             )
+            ScaffoldAlert(
+                GUIDELINE_ROOT / "GuidelineClassAgeRange2.vue",
+                event_next_callback=transition_next,
+                event_back_callback=transition_previous,
+                can_advance=component_state.can_transition(next=True),
+                show=component_state.is_current_step(Marker.cla_age2),
+                state_view={
+                    "student_low_age": component_state.student_low_age,
+                    "student_high_age": component_state.student_high_age
+                }
+            )
+            ScaffoldAlert(
+                GUIDELINE_ROOT / "GuidelineClassAgeRange3.vue",
+                event_next_callback=transition_next,
+                event_back_callback=transition_previous,
+                can_advance=component_state.can_transition(next=True),
+                show=component_state.is_current_step(Marker.cla_age3),
+                state_view={
+                    "student_low_age": component_state.student_low_age,
+                    "student_high_age": component_state.student_high_age
+                }
+            )
+            ScaffoldAlert(
+                GUIDELINE_ROOT / "GuidelineClassAgeRange4.vue",
+                event_next_callback=transition_next,
+                event_back_callback=transition_previous,
+                can_advance=component_state.can_transition(next=True),
+                show=component_state.is_current_step(Marker.cla_age4),
+                state_view={
+                    "student_low_age": component_state.student_low_age,
+                    "student_high_age": component_state.student_high_age
+                }
+            )
+            ScaffoldAlert(
+                GUIDELINE_ROOT / "GuidelineLearnUncertainty1.vue",
+                event_next_callback=transition_next,
+                event_back_callback=transition_previous,
+                can_advance=component_state.can_transition(next=True),
+                show=component_state.is_current_step(Marker.lea_unc1),
+            )
+          ScaffoldAlert(
+                GUIDELINE_ROOT / "GuidelineClassAgeDistribution.vue",
+                event_next_callback=transition_next,
+                event_back_callback=transition_previous,
+                can_advance=component_state.can_transition(next=True),
+                show=component_state.is_current_step(Marker.age_dis1),
+            )
+            
 
 
         def toggle_viewer():
