@@ -11,7 +11,7 @@ from reacton import ipyvuetify as rv
 
 from hubbleds.components.id_slider import IdSlider
 
-from ...state import GLOBAL_STATE, LOCAL_STATE
+from ...state import GLOBAL_STATE, LOCAL_STATE, mc_callback
 from .component_state import ComponentState, Marker
 
 
@@ -50,6 +50,8 @@ def Page():
 
     gjapp, viewer, test_data, test_subset = solara.use_memo(glue_setup, [])
 
+    mc_scoring, set_mc_scoring = solara.use_state(LOCAL_STATE.mc_scoring.value)
+
     test = solara.use_reactive(False)
 
     # Custom vue-only components have to be registered in the Page element
@@ -79,6 +81,7 @@ def Page():
                 GUIDELINE_ROOT / "GuidelineRandomVariability.vue",
                 event_next_callback=transition_next,
                 can_advance=component_state.can_transition(next=True),
+                allow_back=component_state.can_transition(prev=True),
                 show=component_state.is_current_step(Marker.ran_var1),
             )
             ScaffoldAlert(
@@ -106,7 +109,8 @@ def Page():
                 event_next_callback=transition_next,
                 event_back_callback=transition_previous,
                 can_advance=component_state.can_transition(next=True),
-                show=component_state.is_current_step(Marker.rel_age1)
+                show=component_state.is_current_step(Marker.rel_age1),
+                event_mc_callback=lambda event: mc_callback(event=event, local_state=LOCAL_STATE, set_score=set_mc_scoring)
             )
             ScaffoldAlert(
                 GUIDELINE_ROOT / "GuidelineClassAgeRange.vue",
@@ -155,7 +159,7 @@ def Page():
                 can_advance=component_state.can_transition(next=True),
                 show=component_state.is_current_step(Marker.lea_unc1),
             )
-          ScaffoldAlert(
+            ScaffoldAlert(
                 GUIDELINE_ROOT / "GuidelineClassAgeDistribution.vue",
                 event_next_callback=transition_next,
                 event_back_callback=transition_previous,

@@ -2,8 +2,8 @@
   <scaffold-alert
     title-text="Random Variability"
     @next="next_callback()"
-    :allow-back="false"
-    :can-advance="true"
+    :allow-back="allow_back"
+    :can-advance="can_advance"
   >
     <div
       class="mb-4"
