@@ -1,8 +1,6 @@
-import dataclasses
 from random import randint
 
 import numpy as np
-import pandas as pd
 import solara
 from cosmicds.widgets.table import Table
 from cosmicds.components import ScaffoldAlert, ViewerLayout

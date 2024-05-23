@@ -1,15 +1,9 @@
 from solara import Reactive
-import solara
 import enum
 from ...decorators import computed_property
 from ...marker_base import MarkerBase
 import dataclasses
-from cosmicds.utils import API_URL
-from ...state import GLOBAL_STATE
-from ...data_models.student import example_data, StudentMeasurement, SpectrumData
-from contextlib import closing
-from io import BytesIO
-from astropy.io import fits
+from ...data_models.student import student_data
 
 
 ELEMENT_REST = {
@@ -56,6 +50,8 @@ class ComponentState:
     dosdonts_tutorial_opened: Reactive[bool] = dataclasses.field(
         default=Reactive(False)
     )
+    selected_galaxy: Reactive[dict] = dataclasses.field(default=Reactive({}))
+    selected_example_galaxy: Reactive[dict] = dataclasses.field(default=Reactive({}))
 
     def setup(self):
         pass

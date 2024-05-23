@@ -1,23 +1,17 @@
-import dataclasses
-
-import numpy as np
-import pandas as pd
 import solara
-from cosmicds.widgets.table import Table
 from cosmicds.components import ScaffoldAlert
 from cosmicds import load_custom_vue_components
 from glue_jupyter.app import JupyterApplication
 from reacton import ipyvuetify as rv
-from solara import Reactive
 from pathlib import Path
-from astropy.table import Table
 
-from ...components import DataTable, AngsizeDosDontsSlideshow
+from hubbleds.widgets.distance_tool.distance_tool import DistanceTool
+
+from ...components import AngsizeDosDontsSlideshow, DataTable
 from ...data_management import *
 from ...state import GLOBAL_STATE, LOCAL_STATE, mc_callback
-from ...utils import DISTANCE_CONSTANT
-from ...widgets.selection_tool import SelectionTool
-from ...data_models.student import student_data, StudentMeasurement, example_data
+from ...utils import DISTANCE_CONSTANT, GALAXY_FOV
+from ...data_models.student import student_data, example_data
 from .component_state import ComponentState, Marker
 
 
@@ -28,31 +22,22 @@ gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
 component_state = ComponentState()
 
 
-# def _on_galaxy_selected(galaxy):
-#     is_in = np.isin(
-#         [x.name for x in student_data.measurements], galaxy["name"]
-#     )  # Avoid duplicates
-#     already_present = is_in.size > 0 and is_in[0]
+@solara.component
+def DistanceToolComponent(galaxy):
+    tool = DistanceTool.element()
 
-#     if not already_present:
-#         student_data.measurements.append(StudentMeasurement(**galaxy))
-#         component_state.total_galaxies.value += 1
+    def set_selected_galaxy():
+        if galaxy.value:
+            widget = solara.get_widget(tool)
+            widget.go_to_location(galaxy.value["ra"], galaxy.value["decl"], fov=GALAXY_FOV)
 
+    solara.use_effect(set_selected_galaxy, [galaxy.value])
 
-def _on_example_galaxy_table_row_selected(row):
-    galaxy = row["item"]
-    component_state.selected_example_galaxy.set(galaxy)
-    component_state.lambda_rest.set(galaxy['rest_wave'])
-    component_state.lambda_obs.subscribe(
-        lambda *args: example_data.update(galaxy['id'], {'measured_wave': args[0]}))
+    def _define_callbacks():
+        widget = solara.get_widget(tool)
+        widget.angular_height.observe(
 
-
-def _on_galaxy_table_row_selected(row):
-    galaxy = row["item"]
-    component_state.selected_galaxy.set(galaxy)
-    component_state.lambda_rest.set(galaxy['rest_wave'])
-    component_state.lambda_obs.subscribe(
-        lambda *args: student_data.update(galaxy['id'], {'measured_wave': args[0]}))
+    solara.use_effect(_define_callbacks, [])
 
 
 @solara.component
@@ -273,7 +258,36 @@ def Page():
             )
 
         with rv.Col():
-            solara.Markdown("blah blah")
+            with rv.Card(class_="pa-0 ma-0", elevation=0):
+            
+                common_headers = [
+                    {
+                        "text": "Galaxy Name",
+                        "align": "start",
+                        "sortable": False,
+                        "value": "name"
+                    },
+                    { "text": "&theta; (arcsec)", "value": "theta" },
+                    { "text": "Distance (Mpc)", "value": "distance" },
+                ]
+            if component_state.current_step.value.value < Marker.rep_rem1.value:
+                DistanceToolComponent(component_state.selected_example_galaxy)
+                DataTable(
+                    title="Example Galaxy",
+                    headers=common_headers + [{ "text": "Measurement Number", "value": "measurement_number" }],
+                    items=example_data.dict(exclude={'measurements': {'__all__': 'spectrum'}})["measurements"],
+                    highlighted=False,  # TODO: Set the markers for this,
+                    event_on_row_selected=lambda galaxy: component_state.selected_example_galaxy.set(galaxy["item"])
+                )
+            else:
+                DistanceToolComponent(component_state.selected_galaxy)
+                DataTable(
+                    title="My Galaxies",
+                    headers=common_headers,
+                    items=student_data.dict(exclude={'measurements': {'__all__': 'spectrum'}})["measurements"],
+                    highlighted=False,  # TODO: Set the markers for this,
+                    event_on_row_selected=lambda galaxy: component_state.selected_galaxy.set(galaxy["item"])
+                )
 
     with solara.ColumnsResponsive(12, large=[4,8]):
         with rv.Col():

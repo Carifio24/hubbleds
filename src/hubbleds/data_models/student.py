@@ -21,6 +21,9 @@ class StudentMeasurement(BaseModel):
     measured_wave: Optional[float] = 0.0
     velocity: Optional[float] = 0.0
     spectrum: Optional[SpectrumData] = None
+    theta: Optional[float] = 0.0
+    distance: Optional[float] = 0.0
+    measurement_number: Optional[int] = 0
 
 
 class StudentData(BaseModel):
