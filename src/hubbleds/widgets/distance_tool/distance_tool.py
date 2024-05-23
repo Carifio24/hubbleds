@@ -55,11 +55,16 @@ class DistanceTool(v.VueTemplate):
         self.angular_size = Angle(0, u.deg)
         self.angular_height = Angle(60, u.deg)
         self.widget._set_message_type_callback('wwt_view_state',
-                                               self._handle_view_message)
+                                               self._update_wwt_state)
         self.last_update = datetime.now()
-        self._rt = RepeatedTimer(self.UPDATE_TIME, self._check_view_changing)
+        self._rt = RepeatedTimer(self.UPDATE_TIME, self._update_wwt_state)
+        self._rt.start()
         self.update_text()
         super().__init__(*args, **kwargs)
+
+    def __del__(self):
+        self._rt.stop()
+        super().__del__()
 
     def _setup_widget(self):
         # Temp update to set background to SDSS. Once we remove galaxies without SDSS WWT tiles from the catalog, make background DSS again, and set wwt.foreground_opacity = 0, per Peter Williams.
@@ -126,7 +131,7 @@ class DistanceTool(v.VueTemplate):
             self.fov_text = f"{s}\""
         self.update_text()
 
-    def _handle_view_message(self, wwt, _updated):
+    def _update_wwt_state(self, wwt=None, _updated=None):
         fov = Angle(self.widget.get_fov())
         center = self.widget.get_center()
         ra = Angle(center.ra)
@@ -159,7 +164,7 @@ class DistanceTool(v.VueTemplate):
     def set_guard(self, max = None, min = None):
         self.activate_guard()
         self.galaxy_max_size = Angle(max) if max is not None else self.galaxy_max_size
-        self.galaxy_min_size = Angle(min) if min is not None else  self.galaxy_min_size
+        self.galaxy_min_size = Angle(min) if min is not None else self.galaxy_min_size
     
     def validate_angular_size(self, angular_size, check = True):
         if not self.guard:

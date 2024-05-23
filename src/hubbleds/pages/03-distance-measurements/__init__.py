@@ -2,7 +2,7 @@ import solara
 from cosmicds.components import ScaffoldAlert
 from cosmicds import load_custom_vue_components
 from glue_jupyter.app import JupyterApplication
-from reacton import ipyvuetify as rv
+from reacton import component, ipyvuetify as rv
 from pathlib import Path
 
 from hubbleds.widgets.distance_tool.distance_tool import DistanceTool
@@ -23,7 +23,7 @@ component_state = ComponentState()
 
 
 @solara.component
-def DistanceToolComponent(galaxy):
+def DistanceToolComponent(galaxy, data):
     tool = DistanceTool.element()
 
     def set_selected_galaxy():
@@ -35,7 +35,10 @@ def DistanceToolComponent(galaxy):
 
     def _define_callbacks():
         widget = solara.get_widget(tool)
-        widget.angular_height.observe(
+        widget.observe(
+            lambda size: data.update(galaxy.id, {"angular_size": size}),
+            ["angular_size"]
+        )
 
     solara.use_effect(_define_callbacks, [])
 
@@ -267,11 +270,11 @@ def Page():
                         "sortable": False,
                         "value": "name"
                     },
-                    { "text": "&theta; (arcsec)", "value": "theta" },
+                    { "text": "&theta; (arcsec)", "value": "angular_size" },
                     { "text": "Distance (Mpc)", "value": "distance" },
                 ]
             if component_state.current_step.value.value < Marker.rep_rem1.value:
-                DistanceToolComponent(component_state.selected_example_galaxy)
+                DistanceToolComponent(component_state.selected_example_galaxy, example_data)
                 DataTable(
                     title="Example Galaxy",
                     headers=common_headers + [{ "text": "Measurement Number", "value": "measurement_number" }],
@@ -280,7 +283,7 @@ def Page():
                     event_on_row_selected=lambda galaxy: component_state.selected_example_galaxy.set(galaxy["item"])
                 )
             else:
-                DistanceToolComponent(component_state.selected_galaxy)
+                DistanceToolComponent(component_state.selected_galaxy, student_data)
                 DataTable(
                     title="My Galaxies",
                     headers=common_headers,
