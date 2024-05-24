@@ -1,4 +1,5 @@
 import solara
+import astropy.units as u
 from cosmicds.components import ScaffoldAlert
 from cosmicds import load_custom_vue_components
 from glue_jupyter.app import JupyterApplication
@@ -27,18 +28,21 @@ def DistanceToolComponent(galaxy, data):
     tool = DistanceTool.element()
 
     def set_selected_galaxy():
+        widget = solara.get_widget(tool)
         if galaxy.value:
-            widget = solara.get_widget(tool)
             widget.go_to_location(galaxy.value["ra"], galaxy.value["decl"], fov=GALAXY_FOV)
+        widget.measuring_allowed = galaxy.value is not None
 
     solara.use_effect(set_selected_galaxy, [galaxy.value])
 
+    def update_angular_size(change):
+        angle = change["new"]
+        if galaxy.value is not None and angle is not None:
+            data.update(galaxy.value["id"], {"angular_size": int(angle.to(u.arcsec).value)})
+
     def _define_callbacks():
         widget = solara.get_widget(tool)
-        widget.observe(
-            lambda size: data.update(galaxy.id, {"angular_size": size}),
-            ["angular_size"]
-        )
+        widget.observe(update_angular_size, ["angular_size"])
 
     solara.use_effect(_define_callbacks, [])
 
@@ -275,6 +279,7 @@ def Page():
                 ]
             if component_state.current_step.value.value < Marker.rep_rem1.value:
                 def update_example_galaxy(galaxy):
+                    print(galaxy)
                     flag = galaxy.get("value", True)
                     value = galaxy["item"] if flag else None
                     component_state.selected_example_galaxy.set(value)
@@ -287,6 +292,7 @@ def Page():
                     highlighted=False,  # TODO: Set the markers for this,
                     event_on_row_selected=update_example_galaxy
                 )
+
             else:
                 def update_galaxy(galaxy):
                     flag = galaxy.get("value", True)

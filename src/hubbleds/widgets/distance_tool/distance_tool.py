@@ -27,7 +27,7 @@ class DistanceTool(v.VueTemplate):
     width = Int().tag(sync=True)
     view_changing = Bool(False).tag(sync=True)
     measuring_allowed = Bool(False).tag(sync=True)
-    show_ruler = Bool(False).tag(sync=True)
+    show_ruler = Bool(True).tag(sync=True)
     fov_text = Unicode().tag(sync=True)
     flagged = Bool(False).tag(sync=True)
     ruler_click_count = Int().tag(sync=True)
