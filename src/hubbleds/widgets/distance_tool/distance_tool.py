@@ -129,7 +129,6 @@ class DistanceTool(v.VueTemplate):
             self.fov_text = f"{m:.1f}'"
         else:
             self.fov_text = f"{s}\""
-        self.update_text()
 
     def _update_wwt_state(self, wwt=None, _updated=None):
         fov = Angle(self.widget.get_fov())

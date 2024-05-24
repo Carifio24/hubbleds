@@ -470,6 +470,12 @@ export default {
     jupyter_update_text: function() {
       this.updateFOVText();
     }
+  },
+  watch: {
+    fov_text(text) {
+      console.log(`fov_text watcher: ${text}`);
+      this.updateFOVText();
+    }
   }
 }
 </script>
