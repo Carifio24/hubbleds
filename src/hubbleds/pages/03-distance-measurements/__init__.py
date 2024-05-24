@@ -274,22 +274,32 @@ def Page():
                     { "text": "Distance (Mpc)", "value": "distance" },
                 ]
             if component_state.current_step.value.value < Marker.rep_rem1.value:
+                def update_example_galaxy(galaxy):
+                    flag = galaxy.get("value", True)
+                    value = galaxy["item"] if flag else None
+                    component_state.selected_example_galaxy.set(value)
+
                 DistanceToolComponent(component_state.selected_example_galaxy, example_data)
                 DataTable(
                     title="Example Galaxy",
                     headers=common_headers + [{ "text": "Measurement Number", "value": "measurement_number" }],
                     items=example_data.dict(exclude={'measurements': {'__all__': 'spectrum'}})["measurements"],
                     highlighted=False,  # TODO: Set the markers for this,
-                    event_on_row_selected=lambda galaxy: component_state.selected_example_galaxy.set(galaxy["item"])
+                    event_on_row_selected=update_example_galaxy
                 )
             else:
+                def update_galaxy(galaxy):
+                    flag = galaxy.get("value", True)
+                    value = galaxy["item"] if flag else None
+                    component_state.selected_galaxy.set(value)
+
                 DistanceToolComponent(component_state.selected_galaxy, student_data)
                 DataTable(
                     title="My Galaxies",
                     headers=common_headers,
                     items=student_data.dict(exclude={'measurements': {'__all__': 'spectrum'}})["measurements"],
                     highlighted=False,  # TODO: Set the markers for this,
-                    event_on_row_selected=lambda galaxy: component_state.selected_galaxy.set(galaxy["item"])
+                    event_on_row_selected=update_galaxy
                 )
 
     with solara.ColumnsResponsive(12, large=[4,8]):
