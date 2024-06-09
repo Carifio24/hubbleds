@@ -39,6 +39,7 @@ def DistanceToolComponent(galaxy, show_ruler, angular_size_callback):
     def set_selected_galaxy():
         widget = solara.get_widget(tool)
         if galaxy:
+            widget.measuring = False
             widget.go_to_location(galaxy["ra"], galaxy["decl"], fov=GALAXY_FOV)
         widget.measuring_allowed = bool(galaxy)
 
@@ -308,7 +309,7 @@ def Page():
                 angular_size_callback=_ang_size_cb
             )
 
-            if cmponent_state.current_step.value.value < Marker.rep_rem1.value:
+            if component_state.current_step.value.value < Marker.rep_rem1.value:
                 def update_example_galaxy(galaxy):
                     flag = galaxy.get("value", True)
                     value = galaxy["item"] if flag else None
