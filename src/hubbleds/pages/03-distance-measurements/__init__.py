@@ -308,7 +308,7 @@ def Page():
                 angular_size_callback=_ang_size_cb
             )
 
-            if component_state.current_step.value.value < Marker.rep_rem1.value:
+            if cmponent_state.current_step.value.value < Marker.rep_rem1.value:
                 def update_example_galaxy(galaxy):
                     flag = galaxy.get("value", True)
                     value = galaxy["item"] if flag else None

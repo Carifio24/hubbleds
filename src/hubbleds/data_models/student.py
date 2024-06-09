@@ -17,13 +17,13 @@ class StudentMeasurement(BaseModel):
     z: Optional[float]
     type: Optional[str]
     element: Optional[str]
-    rest_wave: Optional[float] = 0.0
-    measured_wave: Optional[float] = 0.0
-    velocity: Optional[float] = 0.0
+    rest_wave: Optional[float] = None
+    measured_wave: Optional[float] = None
+    velocity: Optional[float] = None
     spectrum: Optional[SpectrumData] = None
-    angular_size: Optional[int] = 0
-    distance: Optional[float] = 0.0
-    measurement_number: Optional[int] = 0
+    angular_size: Optional[int] = None
+    distance: Optional[float] = None
+    measurement_number: Optional[int] = 1
 
 
 class StudentData(BaseModel):
