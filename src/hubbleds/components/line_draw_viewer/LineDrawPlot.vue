@@ -69,7 +69,7 @@ export default {
       element: null,
       lineDrawn: false,
       mouseDown: false,
-      movingLine: true,
+      movingLine: false,
       lastEndpoint: null,
       plotDataCount: 0,
       lineTraceIndex: 0,
@@ -105,7 +105,6 @@ export default {
         this.movingLine = false;
         this.drawEndpoint(event);
         this.lineDrawn = true;
-        this.setCursor("move");
         if (this.line_drawn) {
           this.line_drawn();
         }
@@ -132,7 +131,7 @@ export default {
     plotlyUnhoverHandler(event) {
       if (event.points[0].curveNumber === this.endpointTraceIndex) {
         this.hoveringEndpoint = false;
-        this.setCursor("crosshair");
+        this.setCursor(this.movingLine ? "grabbing" : "crosshair");
       }
     },
     setCursor(type) {
@@ -176,15 +175,21 @@ export default {
         document.removeEventListener("mouseup", this.mouseUpHandler);
       }
     },
+    addPlotlyHandlers() {
+      this.element.on("plotly_click", this.plotlyClickHandler);
+      this.element.on("plotly_hover", this.plotlyHoverHandler);
+      this.element.on("plotly_unhover", this.plotlyUnhoverHandler);
+    },
+    removePlotlyHandlers() {
+      this.element.removeListener("plotly_click", this.plotlyClickHandler);
+      this.element.removeListener("plotly_hover", this.plotlyHoverHandler);
+      this.element.removeListener("plotly_unhover", this.plotlyUnhoverHandler);
+    },
     setupPlotlyHandlers(active) {
       if (active) {
-        this.element.on("plotly_click", this.plotlyClickHandler);
-        this.element.on("plotly_hover", this.plotlyHoverHandler);
-        this.element.on("plotly_unhover", this.plotlyUnhoverHandler);
+        this.addPlotlyHandlers();
       } else {
-        this.element.removeListener("plotly_click", this.plotlyClickHandler);
-        this.element.removeListener("plotly_hover", this.plotlyHoverHandler);
-        this.element.removeListener("plotly_unhover", this.plotlyUnhoverHandler);
+        this.removePlotlyHandlers();
       }
     }
   },
@@ -202,9 +207,21 @@ export default {
       );
     },
     active(value) {
+      if (value && this.lastEndpoint === null) {
+        this.movingLine = true;
+      }
       Plotly.update(this.chart.uuid, { visible: true }, {}, [this.lineTraceIndex]);
       this.setupMouseHandlers(value);
-      this.setupPlotlyHandlers(value);
+      if (!value) {
+        this.movingLine = false;
+      }
+    },
+    movingLine(value) {
+      const cursor = value ? "grabbing" : "move";
+      this.setCursor(cursor);
+      if (this.lastEndpoint !== null) {
+        this.setupPlotlyHandlers(!value);
+      }
     }
   }
 }
