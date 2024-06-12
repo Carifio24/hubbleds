@@ -1,7 +1,7 @@
 import solara
 from cosmicds import load_custom_vue_components
 from cosmicds.components import ScaffoldAlert, ViewerLayout, StateEditor
-from cosmicds.viewers import CDSScatterView
+from cosmicds.viewers import CDSHistogramView, CDSScatterView
 from glue.core import Data
 from glue.core.subset import RangeSubsetState
 from glue_jupyter import JupyterApplication
@@ -9,6 +9,7 @@ from pathlib import Path
 from reacton import component, ipyvuetify as rv
 
 from hubbleds.components.id_slider import IdSlider
+from hubbleds.components.statistics_selector.statistics_selector import StatisticsSelector
 from hubbleds.marker_base import MarkerBase
 from ...components import UncertaintySlideshow
 
@@ -46,10 +47,12 @@ def Page():
         layer.state.size = 25
         layer.state.visible = False
         viewer.add_subset(test_subset)
-        return gjapp, viewer, test_data, test_subset 
+
+        hist_viewer = gjapp.new_data_viewer(CDSHistogramView, data=test_data, show=False)
+        return gjapp, viewer, test_data, test_subset, hist_viewer
 
 
-    gjapp, viewer, test_data, test_subset = solara.use_memo(glue_setup, [])
+    gjapp, viewer, test_data, test_subset, hist_viewer = solara.use_memo(glue_setup, [])
 
     mc_scoring, set_mc_scoring = solara.use_state(LOCAL_STATE.mc_scoring.value)
 
@@ -65,6 +68,8 @@ def Page():
     # component_state.setup()
 
     StateEditor(Marker, component_state)
+
+    StatisticsSelector([hist_viewer.state], [hist_viewer.figure], data=test_data, units=["counts"])
 
     # solara.Text(
     #     f"Current step: {component_state.current_step.value}, "
