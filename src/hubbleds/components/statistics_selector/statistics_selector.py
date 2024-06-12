@@ -22,7 +22,6 @@ def StatisticsSelector(viewers, glue_data, units, bins=None, statistics=["mean",
     transform = kwargs.get("transform", None)
     color = kwargs.get("color", None)
     line_ids = []
-    selected = {}
     bins = bins or [getattr(viewer.state, "bins", None) for viewer in viewers]
 
     help_text = {
@@ -63,10 +62,22 @@ def StatisticsSelector(viewers, glue_data, units, bins=None, statistics=["mean",
             new_lines.append(viewer_lines)
             viewer.figure.add_traces(viewer_lines)
 
+    selected = solara.use_reactive([])
+    def _update_selected(stat, value):
+        if value and stat not in selected.value:
+            selected.set(selected.value + [stat])
+        else:
+          try:
+              index = selected.value.index(stat)
+              selected.set(selected.value[:index] + selected.value[index+1:])
+          except ValueError:
+              pass
+        print(selected.value)
+
 
     with rv.Card():
         with rv.Container():
             for stat in statistics:
                 model = solara.use_reactive(False)
-                selected[stat] = model
-                rv.Switch(v_model=model.value, value=stat)
+                # We need to bind the current value of `stat` to the lambda
+                solara.Switch(value=model, on_value=lambda value, stat=stat: _update_selected(stat, value))
