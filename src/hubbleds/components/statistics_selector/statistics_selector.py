@@ -17,12 +17,12 @@ def find_statistic(stat, viewer, data, bins):
 
 
 @solara.component
-def StatisticsSelector(states, figures, data, units, bins=None, statistics=["mean", "median", "mode"], **kwargs):
+def StatisticsSelector(viewers, glue_data, units, bins=None, statistics=["mean", "median", "mode"], **kwargs):
 
     transform = kwargs.get("transform", None)
     color = kwargs.get("color", None)
     line_ids = []
-    selected = solara.Reactive(None)
+    selected = {}
     bins = bins or [getattr(viewer.state, "bins", None) for viewer in viewers]
 
     help_text = {
@@ -44,7 +44,7 @@ def StatisticsSelector(states, figures, data, units, bins=None, statistics=["mea
             return
 
         new_lines = []
-        for viewer, d, bin, unit in zip(viewers, data, bins, units):
+        for viewer, d, bin, unit in zip(viewers, glue_data, bins, units):
             viewer_lines = []
             try:
                 capitalized = new_selected.capitalize()
@@ -64,8 +64,9 @@ def StatisticsSelector(states, figures, data, units, bins=None, statistics=["mea
             viewer.figure.add_traces(viewer_lines)
 
 
-    selected = solara.use_reactive(None)
     with rv.Card():
         with rv.Container():
             for stat in statistics:
-                rv.Switch(v_model=selected, value=stat)
+                model = solara.use_reactive(False)
+                selected[stat] = model
+                rv.Switch(v_model=model.value, value=stat)
