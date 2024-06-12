@@ -12,6 +12,8 @@ from solara import Reactive
 from pathlib import Path
 from astropy.table import Table
 
+from hubbleds.components.line_fit_viewer import LineFitViewer
+
 from ...components import DataTable, HubbleExpUniverseSlideshow
 from ...data_management import *
 from ...state import GLOBAL_STATE, LOCAL_STATE, mc_callback, mc_serialize_score
@@ -82,6 +84,8 @@ def Page():
         #     component_state.transition_to(Marker.sel_gal3, force=True)
 
         # solara.Button("Select 5 Galaxies", on_click=_on_select_galaxies_clicked)
+
+    LineFitViewer([{"x": [0, 1, 2, 3, 4], "y": [0, 1, 4, 9, 16]}])
 
 
     with solara.ColumnsResponsive(12, large=[4,8]):
