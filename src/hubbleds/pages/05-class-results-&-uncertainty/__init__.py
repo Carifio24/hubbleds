@@ -1,6 +1,6 @@
 import solara
 from cosmicds import load_custom_vue_components
-from cosmicds.components import ScaffoldAlert, ViewerLayout, StateEditor
+from cosmicds.components import ScaffoldAlert, ViewerLayout, StateEditor, StatisticsSelector
 from cosmicds.viewers import CDSHistogramView, CDSScatterView
 from glue.core import Data
 from glue.core.subset import RangeSubsetState
@@ -9,7 +9,6 @@ from pathlib import Path
 from reacton import component, ipyvuetify as rv
 
 from hubbleds.components.id_slider import IdSlider
-from hubbleds.components.statistics_selector.statistics_selector import StatisticsSelector
 from hubbleds.marker_base import MarkerBase
 from ...components import UncertaintySlideshow
 
