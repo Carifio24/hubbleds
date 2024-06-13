@@ -1,6 +1,6 @@
 import solara
 from cosmicds import load_custom_vue_components
-from cosmicds.components import ScaffoldAlert, ViewerLayout, StateEditor, StatisticsSelector
+from cosmicds.components import ScaffoldAlert, ViewerLayout, StateEditor, StatisticsSelector, PercentageSelector
 from cosmicds.viewers import CDSHistogramView, CDSScatterView
 from glue.core import Data
 from glue.core.subset import RangeSubsetState
@@ -70,6 +70,7 @@ def Page():
 
     ViewerLayout(hist_viewer)
     StatisticsSelector([hist_viewer], glue_data=[test_data], units=["counts"], transform=round)
+    PercentageSelector([hist_viewer], glue_data=[test_data])
 
     # solara.Text(
     #     f"Current step: {component_state.current_step.value}, "
