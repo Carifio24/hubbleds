@@ -70,7 +70,7 @@ def Page():
     StateEditor(Marker, component_state)
 
     ViewerLayout(hist_viewer)
-    StatisticsSelector([hist_viewer], glue_data=[test_data], units=["counts"])
+    StatisticsSelector([hist_viewer], glue_data=[test_data], units=["counts"], transform=round)
 
     # solara.Text(
     #     f"Current step: {component_state.current_step.value}, "
