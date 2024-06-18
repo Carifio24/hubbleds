@@ -23,6 +23,7 @@ def LineFitViewer(data):
        print("component activate")
        print(fig.data)
        print(id(fig))
+       print(line_fit_handler.active.value)
        activate_count.set(activate_count.value + 1)
 
     with rv.Card():
@@ -35,4 +36,4 @@ def LineFitViewer(data):
             line_button = solara.IconButton(icon_name="mdi-chart-timeline-variant", on_click=activate)
             rv.BtnToggle(v_model="selected", children=[line_button], background_color="primary", borderless=True)
 
-        solara.FigurePlotly(fig, dependencies=[line_fit_handler.active])
+        solara.FigurePlotly(fig, dependencies=[line_fit_handler.active.value])
