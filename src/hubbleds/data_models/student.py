@@ -69,22 +69,33 @@ class StudentData(BaseModel):
         return measurement['galaxy']['spectrum']
 
 
-class ClassMeasurement(StudentMeasurement):
-    student_id: int
-
-
-class ClassData(StudentData):
-    measurements: Optional[List[ClassMeasurement]]
+class MeasurementsData(StudentData):
+    measurements: Optional[List[StudentMeasurement]]
 
     def clear(self):
         if self.measurements:
             self.measurements.clear()
 
-    def update_measurements(self, measurements: List[ClassMeasurement]):
+    def update_measurements(self, measurements: List[StudentMeasurement]):
         self.clear()
         self.measurements = measurements
 
 
+class Summary(BaseModel):
+    id: int
+    fit_value: float
+    fit_unit: str
+    age_value: float
+    age_unit: str
+
+
+class SummaryData(BaseModel):
+    summaries: Optional[List[Summary]]
+
+
 student_data = StudentData(measurements=[])
 example_data = StudentData(measurements=[])
-class_data = ClassData(measurements=[])
+class_data = MeasurementsData(measurements=[])
+all_data = MeasurementsData(measurements=[])
+student_summaries = SummaryData(summaries=[])
+class_summaries = SummaryData(summaries=[])

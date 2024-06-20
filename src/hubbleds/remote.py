@@ -1,7 +1,7 @@
 from cosmicds.utils import API_URL
 from cosmicds.state import GLOBAL_STATE
 from .utils import HUBBLE_ROUTE_PATH
-from .data_models.student import ClassMeasurement, student_data, StudentMeasurement, example_data
+from .data_models.student import ClassMeasurement, Summary, student_data, StudentMeasurement, example_data
 from contextlib import closing
 from io import BytesIO
 from astropy.io import fits
@@ -73,6 +73,22 @@ class DatabaseAPI:
             meas_dict[k] = gal_dict
 
         return meas_dict
+
+
+    @staticmethod
+    def _parse_summary(summary):
+        summary_dict = {}
+
+        hubble_prefix = "hubble_"
+        for k, v in summary.items():
+            if k.startswith(hubble_prefix):
+                summary_dict[k.replace(hubble_prefix, "")] = v
+
+            if k in ("class_id", "student_id"):
+                summary_dict["id"] = v
+
+        return summary_dict
+
 
     @staticmethod
     def get_measurements(samples=False):
@@ -152,7 +168,9 @@ class DatabaseAPI:
 
     @staticmethod
     def get_class_measurements():
-        r = GLOBAL_STATE.request_session.get(f"{API_URL}/{HUBBLE_ROUTE_PATH}/class-measurements/{GLOBAL_STATE.student.id.value}")
+        r = GLOBAL_STATE.request_session.get(
+            f"{API_URL}/{HUBBLE_ROUTE_PATH}/class-measurements/{GLOBAL_STATE.student.id.value}"
+        )
         res_json = r.json()
 
         measurements = []
@@ -160,10 +178,42 @@ class DatabaseAPI:
         for measurement in res_json["measurements"]:
             meas_dict = DatabaseAPI._parse_measurement(measurement)
 
-            measurement = ClassMeasurement(**meas_dict)
+            measurement = StudentMeasurement(**meas_dict)
             measurements.append(measurement)
 
         return measurements
+
+
+    @staticmethod
+    def get_all_data():
+        r = GLOBAL_STATE.request_session.get(
+            f"{API_URL}/{HUBBLE_ROUTE_PATH}/all-data"
+        )
+        res_json = r.json()
+
+        measurements = []
+        for measurement in res_json["measurements"]:
+            meas_dict = DatabaseAPI._parse_measurement(measurement)
+
+            measurement = StudentMeasurement(**meas_dict)
+            measurements.append(measurement)
+
+        student_summaries = []
+        for summary in res_json["studentData"]:
+            summary_dict = DatabaseAPI._parse_summary(summary)
+
+            summary = Summary(**summary_dict)
+            student_summaries.append(summary)
+
+        class_summaries = []
+        for summary in res_json["classData"]:
+            summary_dict = DatabaseAPI._parse_summary(summary)
+
+            summary = Summary(**summary_dict)
+            class_summaries.append(summary)
+
+        return measurements, student_summaries, class_summaries
+
 
     @staticmethod
     def get_sample_galaxy():
