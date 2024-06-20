@@ -1,6 +1,7 @@
 import dataclasses
 
 import numpy as np
+from hubbleds.remote import DatabaseAPI
 import pandas as pd
 import solara
 from cosmicds.widgets.table import Table
@@ -19,7 +20,7 @@ from ...data_management import *
 from ...state import GLOBAL_STATE, LOCAL_STATE, mc_callback, mc_serialize_score, get_free_response, fr_callback
 from ...utils import AGE_CONSTANT
 from ...widgets.selection_tool import SelectionTool
-from ...data_models.student import student_data, StudentMeasurement, example_data
+from ...data_models.student import student_data, StudentMeasurement, example_data, class_data
 from .component_state import ComponentState, Marker
 
 
@@ -66,6 +67,16 @@ def Page():
         PlotlySupport()
 
     solara.use_memo(_load_math_jax, dependencies=[])
+
+    def _load_class_data():
+        if LOCAL_STATE.stage_4_class_data_students.value:
+            return
+        class_measurements = DatabaseAPI.get_class_measurements()
+        class_data.update_measurements(class_measurements)
+        student_ids = list(np.unique([m["student_id"] for m in class_measurements]))
+        LOCAL_STATE.stage_4_class_data_students.value = student_ids
+
+    solara.use_memo(_load_class_data, dependencies=[])
 
     # Custom vue-only components have to be registered in the Page element
     #  currently, otherwise they will not be available in the front-end

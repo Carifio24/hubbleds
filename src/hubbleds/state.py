@@ -62,10 +62,11 @@ class LocalState(BaseState):
     has_best_fit_galaxy: Reactive[bool] = dataclasses.field(default=Reactive(False))
     enough_students_ready: Reactive[bool] = dataclasses.field(default=Reactive(False))
     started: Reactive[bool] = dataclasses.field(default=Reactive(False))
-    class_data_students: Reactive[list] = dataclasses.field(default=Reactive([]))
     class_data_info: Reactive[dict] = dataclasses.field(default=Reactive({}))
     mc_scoring: Reactive[dict[str, MCScore]] = dataclasses.field(default=Reactive({}))
     free_responses: FreeResponseDict = dataclasses.field(default_factory=FreeResponseDict)
+    stage_4_class_data_students: Reactive[list] = dataclasses.field(default=Reactive([]))
+    stage_5_class_data_students: Reactive[list] = dataclasses.field(default=Reactive([]))
 
     def question_completed(self, qtag: str):
         if qtag in self.mc_scoring.value:

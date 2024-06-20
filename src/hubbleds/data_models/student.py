@@ -73,5 +73,18 @@ class ClassMeasurement(StudentMeasurement):
     student_id: int
 
 
+class ClassData(StudentData):
+    measurements: Optional[List[ClassMeasurement]]
+
+    def clear(self):
+        if self.measurements:
+            self.measurements.clear()
+
+    def update_measurements(self, measurements: List[ClassMeasurement]):
+        self.clear()
+        self.measurements = measurements
+
+
 student_data = StudentData(measurements=[])
 example_data = StudentData(measurements=[])
+class_data = ClassData(measurements=[])
