@@ -1,7 +1,7 @@
 from cosmicds.utils import API_URL
 from cosmicds.state import GLOBAL_STATE
 from .utils import HUBBLE_ROUTE_PATH
-from .data_models.student import student_data, StudentMeasurement, example_data
+from .data_models.student import ClassMeasurement, student_data, StudentMeasurement, example_data
 from contextlib import closing
 from io import BytesIO
 from astropy.io import fits
@@ -148,6 +148,22 @@ class DatabaseAPI:
             url = url + "/first" if samples else url + f"/{measurement['galaxy']['id']}"
             r = GLOBAL_STATE.request_session.delete(url)
             print("Deleted ", r)
+
+
+    @staticmethod
+    def get_class_measurements():
+        r = GLOBAL_STATE.request_session.get(f"{API_URL}/{HUBBLE_ROUTE_PATH}/class-measurements/{GLOBAL_STATE.student.id.value}")
+        res_json = r.json()
+
+        measurements = []
+
+        for measurement in res_json["measurements"]:
+            meas_dict = DatabaseAPI._parse_measurement(measurement)
+
+            measurement = ClassMeasurement(**meas_dict)
+            measurements.append(measurement)
+
+        return measurements
 
     @staticmethod
     def get_sample_galaxy():

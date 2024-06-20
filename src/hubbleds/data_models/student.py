@@ -69,5 +69,9 @@ class StudentData(BaseModel):
         return measurement['galaxy']['spectrum']
 
 
+class ClassMeasurement(StudentMeasurement):
+    student_id: int
+
+
 student_data = StudentData(measurements=[])
 example_data = StudentData(measurements=[])
