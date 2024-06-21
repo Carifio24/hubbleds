@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Iterable
 
 
 class SpectrumData(BaseModel):
@@ -24,6 +24,7 @@ class GalaxyData(BaseModel):
 
 
 class StudentMeasurement(BaseModel):
+    student_id: Optional[int] = 0
     ang_size: Optional[float] = 0
     est_dist: Optional[float] = 0
     rest_wave: Optional[float] = 0.0
@@ -79,6 +80,22 @@ class MeasurementsData(StudentData):
     def update_measurements(self, measurements: List[StudentMeasurement]):
         self.clear()
         self.measurements = measurements
+
+    def get_by_id_and_galaxy(self, student_id: int, galaxy_id: int, exclude=None):
+        idx = next(
+            iter(i for i, x in enumerate(self.measurements) if x.galaxy.id == galaxy_id and x.student_id == student_id),
+            None
+        )
+
+        if idx is None:
+            return {}
+
+        return self.measurements[idx].dict(exclude=exclude)
+
+    def get_by_student_ids(self, student_ids: Iterable[int]) -> List[StudentMeasurement]:
+        if not self.measurements:
+            return []
+        return [m for m in self.measurements if m.student_id is not None and m.student_id in student_ids]
 
 
 class Summary(BaseModel):

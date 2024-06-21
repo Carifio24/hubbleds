@@ -69,12 +69,13 @@ def Page():
     solara.use_memo(_load_math_jax, dependencies=[])
 
     def _load_class_data():
-        if LOCAL_STATE.stage_4_class_data_students.value:
-            return
         class_measurements = DatabaseAPI.get_class_measurements()
+
+        # If we haven't already marked the student IDs used for stage 4 data, do that
+        if not LOCAL_STATE.stage_4_class_data_students.value:
+            student_ids = list(np.unique([m["student_id"] for m in class_measurements]))
+            LOCAL_STATE.stage_4_class_data_students.value = student_ids
         class_data.update_measurements(class_measurements)
-        student_ids = list(np.unique([m["student_id"] for m in class_measurements]))
-        LOCAL_STATE.stage_4_class_data_students.value = student_ids
 
     solara.use_memo(_load_class_data, dependencies=[])
 

@@ -9,13 +9,16 @@ from glue_jupyter import JupyterApplication
 from pathlib import Path
 from reacton import component, ipyvuetify as rv
 from echo import delay_callback
+import numpy as np
 
 from hubbleds.components.id_slider import IdSlider
 from hubbleds.marker_base import MarkerBase
+from hubbleds.remote import DatabaseAPI
 from ...components import UncertaintySlideshow
 
 from ...state import GLOBAL_STATE, LOCAL_STATE, mc_callback, mc_serialize_score, get_free_response, fr_callback
 from .component_state import ComponentState, Marker
+from ...data_models.student import class_data
 
 from cosmicds.components import MathJaxSupport, PlotlySupport
 
@@ -81,6 +84,17 @@ def Page():
         PlotlySupport()
 
     solara.use_memo(_load_math_jax, dependencies=[])
+
+    def _load_class_data():
+        class_measurements = DatabaseAPI.get_class_measurements()
+
+        # If we haven't already marked the student IDs used for stage 5 data, do that
+        if not LOCAL_STATE.stage_5_class_data_students.value:
+            student_ids = list(np.unique([m["student_id"] for m in class_measurements]))
+            LOCAL_STATE.stage_5_class_data_students.value = student_ids
+        class_data.update_measurements(class_measurements)
+
+    solara.use_memo(_load_class_data, dependencies=[])
 
     mc_scoring, set_mc_scoring = solara.use_state(LOCAL_STATE.mc_scoring.value)
 
