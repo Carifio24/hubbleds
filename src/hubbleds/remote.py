@@ -1,7 +1,7 @@
 from cosmicds.utils import API_URL
 from cosmicds.state import GLOBAL_STATE
 from .utils import HUBBLE_ROUTE_PATH
-from .data_models.student import ClassMeasurement, Summary, student_data, StudentMeasurement, example_data
+from .data_models.student import Summary, student_data, StudentMeasurement, example_data
 from contextlib import closing
 from io import BytesIO
 from astropy.io import fits
@@ -47,7 +47,7 @@ class DatabaseAPI:
         return spec_data
 
     @staticmethod
-    def _parse_measurement(measurement):
+    def _parse_measurement(measurement, load_specdata=True):
         meas_dict = {}
 
         for k, v in measurement.items():
@@ -68,7 +68,8 @@ class DatabaseAPI:
 
                 gal_dict[gk] = gv
 
-            gal_dict["spectrum"] = DatabaseAPI._load_spectrum_data(gal_dict)
+            if load_specdata:
+                gal_dict["spectrum"] = DatabaseAPI._load_spectrum_data(gal_dict)
 
             meas_dict[k] = gal_dict
 
@@ -82,10 +83,12 @@ class DatabaseAPI:
         hubble_prefix = "hubble_"
         for k, v in summary.items():
             if k.startswith(hubble_prefix):
-                summary_dict[k.replace(hubble_prefix, "")] = v
+                k = k.replace(hubble_prefix, "")
 
             if k in ("class_id", "student_id"):
                 summary_dict["id"] = v
+            else:
+                summary_dict[k] = v
 
         return summary_dict
 
@@ -100,8 +103,11 @@ class DatabaseAPI:
 
         for measurement in res_json["measurements"]:
             meas_dict = DatabaseAPI._parse_measurement(measurement)
+            print(meas_dict)
 
             measurement = StudentMeasurement(**meas_dict)
+            print("MEAS")
+            print(measurement)
             measurements.append(measurement)
 
         return measurements
@@ -169,14 +175,14 @@ class DatabaseAPI:
     @staticmethod
     def get_class_measurements():
         r = GLOBAL_STATE.request_session.get(
-            f"{API_URL}/{HUBBLE_ROUTE_PATH}/class-measurements/{GLOBAL_STATE.student.id.value}"
+            f"{API_URL}/{HUBBLE_ROUTE_PATH}/class-measurements/{GLOBAL_STATE.student.id.value}/{GLOBAL_STATE.classroom.class_.value}"
         )
         res_json = r.json()
 
         measurements = []
-
+        
         for measurement in res_json["measurements"]:
-            meas_dict = DatabaseAPI._parse_measurement(measurement)
+            meas_dict = DatabaseAPI._parse_measurement(measurement, load_specdata=False)
 
             measurement = StudentMeasurement(**meas_dict)
             measurements.append(measurement)
@@ -193,7 +199,7 @@ class DatabaseAPI:
 
         measurements = []
         for measurement in res_json["measurements"]:
-            meas_dict = DatabaseAPI._parse_measurement(measurement)
+            meas_dict = DatabaseAPI._parse_measurement(measurement, load_specdata=False)
 
             measurement = StudentMeasurement(**meas_dict)
             measurements.append(measurement)

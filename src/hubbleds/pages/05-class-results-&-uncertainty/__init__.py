@@ -14,7 +14,7 @@ import numpy as np
 from hubbleds.components.id_slider import IdSlider
 from hubbleds.marker_base import MarkerBase
 from hubbleds.remote import DatabaseAPI
-from hubbleds.utils import models_to_glue_data
+from hubbleds.utils import make_summary_data, models_to_glue_data
 from ...components import UncertaintySlideshow
 
 from ...state import GLOBAL_STATE, LOCAL_STATE, mc_callback, mc_serialize_score, get_free_response, fr_callback
@@ -39,9 +39,11 @@ def Page():
     def data_setup():
         class_measurements = DatabaseAPI.get_class_measurements()
         if not LOCAL_STATE.stage_5_class_data_students.value:
-            student_ids = list(np.unique([m["student_id"] for m in class_measurements]))
+            student_ids = list(np.unique([m.student_id for m in class_measurements]))
             LOCAL_STATE.stage_5_class_data_students.value = student_ids
         class_data.update_measurements(class_measurements)
+
+        all_measurements, student_summaries, class_summaries = DatabaseAPI.get_all_data()
 
         gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
         test_data = Data(x=[1,2,3,4,5,1,4], y=[1,4,9,16,25,3,7], label="Stage 5 Test Data")
@@ -50,30 +52,37 @@ def Page():
 
         class_data_label = "Class Data"
         class_data_points = class_data.get_by_student_ids(LOCAL_STATE.stage_5_class_data_students.value)
-        class_glue_data = models_to_glue_data(class_data_points)
-        if class_data_label in GLOBAL_STATE.data_collection:
-            existing_data = GLOBAL_STATE.data_collection[class_data_label]
-            # TODO: Update existing data
-        else:
-            GLOBAL_STATE.data_collection.append(class_glue_data)
+        class_glue_data = models_to_glue_data(class_data_points, label=class_data_label)
+        class_glue_data = GLOBAL_STATE.add_or_update_data(class_glue_data)
+
+        class_summ_data = make_summary_data(class_glue_data, id_field="student_id", label="Class Summaries")
+        class_summ_data = GLOBAL_STATE.add_or_update_data(class_summ_data)
+
+        all_data = models_to_glue_data(all_measurements, label="All Measurements")
+        all_data = GLOBAL_STATE.add_or_update_data(all_data)
+
+        student_summ_data = models_to_glue_data(student_summaries, label="All Student Summaries")
+        student_summ_data = GLOBAL_STATE.add_or_update_data(student_summ_data)
+
+        all_class_summ_data = models_to_glue_data(class_summaries, label="All Class Summaries")
+        all_class_summ_data = GLOBAL_STATE.add_or_update_data(class_summ_data)
         
-    
-        if len(test_data.subsets) == 0:
-            test_subset = test_data.new_subset(label="test_subset", alpha=1, markersize=10)
+        if len(class_glue_data.subsets) == 0:
+            class_slider_subset = class_glue_data.new_subset(label="class_slider_subset", alpha=1, markersize=10)
         else:
-            test_subset = test_data.subsets[0]
+            class_slider_subset = class_glue_data.subsets[0]
         if test_data not in gjapp.data_collection:
             gjapp.data_collection.append(test_data)
-        viewer = gjapp.new_data_viewer(CDSScatterView, data=test_data, show=False)
-        viewer.state.x_att = test_data.id['x']
-        viewer.state.y_att = test_data.id['y']
-        viewer.state.title = "Stage 5 Test Data Viewer"
+        viewer = gjapp.new_data_viewer(CDSScatterView, data=class_glue_data, show=False)
+        viewer.state.x_att = class_glue_data.id['est_dist']
+        viewer.state.y_att = class_glue_data.id['velocity']
+        viewer.state.title = "Stage 5 Class Data Viewer"
         layer = viewer.layers[0]
         layer.state.size = 25
         layer.state.visible = False
-        viewer.add_subset(test_subset)
+        viewer.add_subset(class_slider_subset)
 
-        hist_viewer = gjapp.new_data_viewer(CDSHistogramView, data=test_data, show=False)
+        hist_viewer = gjapp.new_data_viewer(CDSHistogramView, data=class_glue_data, show=False)
         def _update_bins(*args):
             props = ('hist_n_bin', 'hist_x_min', 'hist_x_max')
             with delay_callback(hist_viewer.state, *props):
@@ -81,7 +90,6 @@ def Page():
                 component = hist_viewer.state.x_att                   
                 xmin = round(layer.layer.data[component].min(),0) - 0.5
                 xmax = round(layer.layer.data[component].max(),0) + 0.5
-                print(xmin, xmax)
                 hist_viewer.state.hist_n_bin = int(xmax - xmin)
                 hist_viewer.state.hist_x_min = xmin
                 hist_viewer.state.hist_x_max = xmax
@@ -91,9 +99,9 @@ def Page():
         
         gjapp.data_collection.hub.subscribe(gjapp.data_collection, NumericalDataChangedMessage,
                            handler=_update_bins)
-        return gjapp, viewer, test_data, test_subset, hist_viewer
+        return gjapp, viewer, test_data, hist_viewer, class_glue_data, class_slider_subset
 
-    gjapp, viewer, test_data, test_subset, hist_viewer = solara.use_memo(data_setup, [])
+    gjapp, viewer, test_data, hist_viewer, class_glue_data, class_slider_subset = solara.use_memo(data_setup, [])
     
     # Mount external javascript libraries
     def _load_math_jax():
@@ -286,25 +294,27 @@ def Page():
             def toggle_viewer():
                 test.value = not test.value
 
-            def update_test_subset(id, highlighted):
-                test_subset.subset_state = RangeSubsetState(id, id, test_data.id['x'])
+            def update_class_slider_subset(id, highlighted):
+                class_slider_subset.subset_state = RangeSubsetState(id, id, class_glue_data.id['student_id'])
                 color = highlight_color if highlighted else default_color
-                test_subset.style.color = color
+                class_slider_subset.style.color = color
 
             with rv.Col():
                 with solara.Card(style="background-color: #F06292;"):
                     solara.Markdown("Our class comparison viewer with slider goes here")
                     if test.value:
                         ViewerLayout(viewer=gjapp.viewers[0])
-                        test_data = gjapp.data_collection["Stage 5 Test Data"]
+                        class_glue_data = gjapp.data_collection["Class Data"]
+                        class_summ_data = gjapp.data_collection["Class Summaries"]
                         IdSlider(gjapp=gjapp,
-                                data=test_data,
-                                on_id=update_test_subset,
-                                highlight_ids=[1],
-                                id_component=test_data.id['x'],
-                                value_component=test_data.id['y'],
-                                default_color=default_color,
-                                highlight_color=highlight_color,
+                                 data=class_summ_data,
+                                 on_id=update_class_slider_subset,
+                                 highlight_ids=[1],
+                                 # TODO: Fix these!
+                                 id_component=class_summ_data.id['student_id'],
+                                 value_component=class_summ_data.id['age'],
+                                 default_color=default_color,
+                                 highlight_color=highlight_color,
                         )
                     solara.Button("test slider viewer", on_click=toggle_viewer)
 
@@ -373,13 +383,13 @@ def Page():
             with rv.Col():
                 if component_state.current_step_between(Marker.mos_lik2, Marker.con_int3):
                     StatisticsSelector(viewers=[hist_viewer],
-                                       glue_data=[test_data],
+                                       glue_data=[class_glue_data],
                                        units=["counts"],
                                        transform=round,
                                        selected=component_state.statistics_selection)
                 if component_state.current_step_between(Marker.con_int2, Marker.con_int3):
                     PercentageSelector(viewers=[hist_viewer],
-                                       glue_data=[test_data],
+                                       glue_data=[class_glue_data],
                                        selected=component_state.percentage_selection)
 
                 ScaffoldAlert(
@@ -458,14 +468,14 @@ def Page():
             with rv.Col():
                 with solara.Card(style="background-color: #F06292;"):
                     StatisticsSelector(viewers=[hist_viewer],
-                                       glue_data=[test_data],
+                                       glue_data=[class_glue_data],
                                        units=["counts"],
                                        transform=round,
                                        selected=component_state.statistics_selection_class)
 
                 with solara.Card(style="background-color: #F06292;"):
                     PercentageSelector(viewers=[hist_viewer],
-                                       glue_data=[test_data],
+                                       glue_data=[class_glue_data],
                                        selected=component_state.percentage_selection_class)
 
                 ScaffoldAlert(

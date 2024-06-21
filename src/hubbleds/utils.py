@@ -1,3 +1,4 @@
+from collections import defaultdict
 from astropy import units as u
 from astropy.modeling import models, fitting
 from numpy import argsort, pi
@@ -5,6 +6,7 @@ from numpy import argsort, pi
 from cosmicds.utils import mode, percent_around_center_indices
 from pydantic import BaseModel
 from glue.core import Data
+from numbers import Number
 from typing import List, TypeVar
 
 try:
@@ -132,10 +134,49 @@ def data_summary_for_component(data, component_id):
 
 
 M = TypeVar("M", bound=BaseModel)
-def models_to_glue_data(items: List[M]) -> Data:
+def models_to_glue_data(items: List[M], label=None) -> Data:
     data_dict = {}
     if items:
       t = type(items[0])
       for field in t.model_fields.keys():
           data_dict[field] = [getattr(m, field) for m in items]
+    if label:
+        data_dict["label"] = label
     return Data(**data_dict)
+
+
+def create_single_summary(distances: List[Number], velocities: List[Number]):
+    line = fit_line(distances, velocities)
+    h0 = line.slope.value
+    age = age_in_gyr_simple(h0)
+    return h0, age
+
+
+def make_summary_data(measurement_data: Data, id_field="id", label=None) -> Data:
+    dists = defaultdict(list)
+    vels = defaultdict(list)
+    d = measurement_data["est_dist"]
+    v = measurement_data["velocity"]
+    data_kwargs = {}
+    ids = set()
+    for i in range(measurement_data.size):
+        id_num = measurement_data[id_field][i]
+        ids.add(id_num)
+        dists[id_num].append(d[i])
+        vels[id_num].append(v[i])
+
+    hubbles = []
+    ages = []
+    for id_num in ids:
+        h0, age = create_single_summary(dists[id_num], vels[id_num])
+        hubbles.append(h0)
+        ages.append(age)
+
+    data_kwargs = { "H0": hubbles, "age": ages }
+    data_kwargs[id_field] = list(ids)
+
+    if label:
+        data_kwargs["label"] = label
+
+    return Data(**data_kwargs)
+

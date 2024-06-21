@@ -73,6 +73,3 @@ class ComponentState(BaseComponentState):
         return (
             bool(self.hubble_slideshow_finished.value)
         )
-
-    @staticmethod
-    def _load_class_data():
