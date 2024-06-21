@@ -3,6 +3,9 @@ from astropy.modeling import models, fitting
 from numpy import argsort, pi
 
 from cosmicds.utils import mode, percent_around_center_indices
+from pydantic import BaseModel
+from glue.core import Data
+from typing import List, TypeVar
 
 try:
     from astropy.cosmology import Planck18 as planck
@@ -126,3 +129,13 @@ def data_summary_for_component(data, component_id):
         summary[f"{percent}%"] = (bottom, top)
 
     return summary
+
+
+M = TypeVar("M", bound=BaseModel)
+def models_to_glue_data(items: List[M]) -> Data:
+    data_dict = {}
+    if items:
+      t = type(items[0])
+      for field in t.model_fields.keys():
+          data_dict[field] = [getattr(m, field) for m in items]
+    return Data(**data_dict)

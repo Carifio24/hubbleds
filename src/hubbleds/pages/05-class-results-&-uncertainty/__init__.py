@@ -14,6 +14,7 @@ import numpy as np
 from hubbleds.components.id_slider import IdSlider
 from hubbleds.marker_base import MarkerBase
 from hubbleds.remote import DatabaseAPI
+from hubbleds.utils import models_to_glue_data
 from ...components import UncertaintySlideshow
 
 from ...state import GLOBAL_STATE, LOCAL_STATE, mc_callback, mc_serialize_score, get_free_response, fr_callback
@@ -35,11 +36,27 @@ def Page():
     default_color = "#3A86FF"
     highlight_color = "#FF5A00"
 
-    def glue_setup():
+    def data_setup():
+        class_measurements = DatabaseAPI.get_class_measurements()
+        if not LOCAL_STATE.stage_5_class_data_students.value:
+            student_ids = list(np.unique([m["student_id"] for m in class_measurements]))
+            LOCAL_STATE.stage_5_class_data_students.value = student_ids
+        class_data.update_measurements(class_measurements)
+
         gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
         test_data = Data(x=[1,2,3,4,5,1,4], y=[1,4,9,16,25,3,7], label="Stage 5 Test Data")
         test_data.style.color = "green"
         test_data.style.alpha = 0.5
+
+        class_data_label = "Class Data"
+        class_data_points = class_data.get_by_student_ids(LOCAL_STATE.stage_5_class_data_students.value)
+        class_glue_data = models_to_glue_data(class_data_points)
+        if class_data_label in GLOBAL_STATE.data_collection:
+            existing_data = GLOBAL_STATE.data_collection[class_data_label]
+            # TODO: Update existing data
+        else:
+            GLOBAL_STATE.data_collection.append(class_glue_data)
+        
     
         if len(test_data.subsets) == 0:
             test_subset = test_data.new_subset(label="test_subset", alpha=1, markersize=10)
@@ -76,7 +93,7 @@ def Page():
                            handler=_update_bins)
         return gjapp, viewer, test_data, test_subset, hist_viewer
 
-    gjapp, viewer, test_data, test_subset, hist_viewer = solara.use_memo(glue_setup, [])
+    gjapp, viewer, test_data, test_subset, hist_viewer = solara.use_memo(data_setup, [])
     
     # Mount external javascript libraries
     def _load_math_jax():
@@ -84,17 +101,6 @@ def Page():
         PlotlySupport()
 
     solara.use_memo(_load_math_jax, dependencies=[])
-
-    def _load_class_data():
-        class_measurements = DatabaseAPI.get_class_measurements()
-
-        # If we haven't already marked the student IDs used for stage 5 data, do that
-        if not LOCAL_STATE.stage_5_class_data_students.value:
-            student_ids = list(np.unique([m["student_id"] for m in class_measurements]))
-            LOCAL_STATE.stage_5_class_data_students.value = student_ids
-        class_data.update_measurements(class_measurements)
-
-    solara.use_memo(_load_class_data, dependencies=[])
 
     mc_scoring, set_mc_scoring = solara.use_state(LOCAL_STATE.mc_scoring.value)
 
