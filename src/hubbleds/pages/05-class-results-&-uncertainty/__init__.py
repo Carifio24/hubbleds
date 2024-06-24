@@ -50,9 +50,8 @@ def Page():
         test_data.style.color = "green"
         test_data.style.alpha = 0.5
 
-        class_data_label = "Class Data"
         class_data_points = class_data.get_by_student_ids(LOCAL_STATE.stage_5_class_data_students.value)
-        class_glue_data = models_to_glue_data(class_data_points, label=class_data_label)
+        class_glue_data = models_to_glue_data(class_data_points, label="Class Data")
         class_glue_data = GLOBAL_STATE.add_or_update_data(class_glue_data)
 
         class_summ_data = make_summary_data(class_glue_data, id_field="student_id", label="Class Summaries")
@@ -65,7 +64,7 @@ def Page():
         student_summ_data = GLOBAL_STATE.add_or_update_data(student_summ_data)
 
         all_class_summ_data = models_to_glue_data(class_summaries, label="All Class Summaries")
-        all_class_summ_data = GLOBAL_STATE.add_or_update_data(class_summ_data)
+        all_class_summ_data = GLOBAL_STATE.add_or_update_data(all_class_summ_data)
         
         if len(class_glue_data.subsets) == 0:
             class_slider_subset = class_glue_data.new_subset(label="class_slider_subset", alpha=1, markersize=10)
@@ -82,14 +81,15 @@ def Page():
         layer.state.visible = False
         viewer.add_subset(class_slider_subset)
 
-        hist_viewer = gjapp.new_data_viewer(CDSHistogramView, data=class_glue_data, show=False)
+        hist_viewer = gjapp.new_data_viewer(CDSHistogramView, data=class_summ_data, show=False)
+        hist_viewer.state.x_att = class_summ_data.id['age']
         def _update_bins(*args):
             props = ('hist_n_bin', 'hist_x_min', 'hist_x_max')
             with delay_callback(hist_viewer.state, *props):
                 layer = hist_viewer.layers[0] # only works cuz there is only one layer 
                 component = hist_viewer.state.x_att                   
-                xmin = round(layer.layer.data[component].min(),0) - 0.5
-                xmax = round(layer.layer.data[component].max(),0) + 0.5
+                xmin = round(layer.layer.data[component].min(), 0) - 0.5
+                xmax = round(layer.layer.data[component].max(), 0) + 0.5
                 hist_viewer.state.hist_n_bin = int(xmax - xmin)
                 hist_viewer.state.hist_x_min = xmin
                 hist_viewer.state.hist_x_max = xmax
@@ -310,7 +310,6 @@ def Page():
                                  data=class_summ_data,
                                  on_id=update_class_slider_subset,
                                  highlight_ids=[1],
-                                 # TODO: Fix these!
                                  id_component=class_summ_data.id['student_id'],
                                  value_component=class_summ_data.id['age'],
                                  default_color=default_color,
@@ -381,15 +380,16 @@ def Page():
     if component_state.current_step_between(Marker.age_dis1, Marker.con_int3):                
         with solara.ColumnsResponsive(12, large=[5,7]):
             with rv.Col():
+                class_summ_data = GLOBAL_STATE.data_collection["Class Summaries"]
                 if component_state.current_step_between(Marker.mos_lik2, Marker.con_int3):
                     StatisticsSelector(viewers=[hist_viewer],
-                                       glue_data=[class_glue_data],
+                                       glue_data=[class_summ_data],
                                        units=["counts"],
                                        transform=round,
                                        selected=component_state.statistics_selection)
                 if component_state.current_step_between(Marker.con_int2, Marker.con_int3):
                     PercentageSelector(viewers=[hist_viewer],
-                                       glue_data=[class_glue_data],
+                                       glue_data=[class_summ_data],
                                        selected=component_state.percentage_selection)
 
                 ScaffoldAlert(
