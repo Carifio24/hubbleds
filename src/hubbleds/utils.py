@@ -152,7 +152,7 @@ def create_single_summary(distances: List[Number], velocities: List[Number]):
     return h0, age
 
 
-def make_summary_data(measurement_data: Data, id_field="id", label=None) -> Data:
+def make_summary_data(measurement_data: Data, input_id_field="id", output_id_field=None, label=None) -> Data:
     dists = defaultdict(list)
     vels = defaultdict(list)
     d = measurement_data["est_dist"]
@@ -160,7 +160,7 @@ def make_summary_data(measurement_data: Data, id_field="id", label=None) -> Data
     data_kwargs = {}
     ids = set()
     for i in range(measurement_data.size):
-        id_num = measurement_data[id_field][i]
+        id_num = measurement_data[input_id_field][i]
         ids.add(id_num)
         dists[id_num].append(d[i])
         vels[id_num].append(v[i])
@@ -172,8 +172,9 @@ def make_summary_data(measurement_data: Data, id_field="id", label=None) -> Data
         hubbles.append(h0)
         ages.append(age)
 
-    data_kwargs = { "H0": hubbles, "age": ages }
-    data_kwargs[id_field] = list(ids)
+    data_kwargs = { "fit_value": hubbles, "age_value": ages }
+    output_id_field = output_id_field or input_id_field
+    data_kwargs[output_id_field] = list(ids)
 
     if label:
         data_kwargs["label"] = label

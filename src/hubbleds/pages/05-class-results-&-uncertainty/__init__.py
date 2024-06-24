@@ -1,3 +1,4 @@
+from pymdownx.highlight import highlight
 import solara
 from cosmicds import load_custom_vue_components
 from cosmicds.components import ScaffoldAlert, ViewerLayout, StateEditor, StatisticsSelector, PercentageSelector
@@ -7,9 +8,10 @@ from glue.core.message import NumericalDataChangedMessage
 from glue.core.subset import RangeSubsetState
 from glue_jupyter import JupyterApplication
 from pathlib import Path
-from reacton import component, ipyvuetify as rv
+from reacton import component, ipyvuetify as rv, value_component
 from echo import delay_callback
 import numpy as np
+from functools import partial
 
 from hubbleds.components.id_slider import IdSlider
 from hubbleds.marker_base import MarkerBase
@@ -46,15 +48,12 @@ def Page():
         all_measurements, student_summaries, class_summaries = DatabaseAPI.get_all_data()
 
         gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
-        test_data = Data(x=[1,2,3,4,5,1,4], y=[1,4,9,16,25,3,7], label="Stage 5 Test Data")
-        test_data.style.color = "green"
-        test_data.style.alpha = 0.5
 
         class_data_points = class_data.get_by_student_ids(LOCAL_STATE.stage_5_class_data_students.value)
         class_glue_data = models_to_glue_data(class_data_points, label="Class Data")
         class_glue_data = GLOBAL_STATE.add_or_update_data(class_glue_data)
 
-        class_summ_data = make_summary_data(class_glue_data, id_field="student_id", label="Class Summaries")
+        class_summ_data = make_summary_data(class_glue_data, input_id_field="student_id", output_id_field="id", label="Class Summaries")
         class_summ_data = GLOBAL_STATE.add_or_update_data(class_summ_data)
 
         all_data = models_to_glue_data(all_measurements, label="All Measurements")
@@ -67,41 +66,59 @@ def Page():
         all_class_summ_data = GLOBAL_STATE.add_or_update_data(all_class_summ_data)
         
         if len(class_glue_data.subsets) == 0:
-            class_slider_subset = class_glue_data.new_subset(label="class_slider_subset", alpha=1, markersize=10)
+            student_slider_subset = class_glue_data.new_subset(label="student_slider_subset", alpha=1, markersize=10)
         else:
-            class_slider_subset = class_glue_data.subsets[0]
-        if test_data not in gjapp.data_collection:
-            gjapp.data_collection.append(test_data)
-        viewer = gjapp.new_data_viewer(CDSScatterView, data=class_glue_data, show=False)
-        viewer.state.x_att = class_glue_data.id['est_dist']
-        viewer.state.y_att = class_glue_data.id['velocity']
-        viewer.state.title = "Stage 5 Class Data Viewer"
-        layer = viewer.layers[0]
+            student_slider_subset = class_glue_data.subsets[0]
+        slider_viewer = gjapp.new_data_viewer(CDSScatterView, data=class_glue_data, show=False)
+        slider_viewer.state.x_att = class_glue_data.id['est_dist']
+        slider_viewer.state.y_att = class_glue_data.id['velocity']
+        slider_viewer.state.title = "Stage 5 Class Data Viewer"
+        layer = slider_viewer.layers[0]
         layer.state.size = 25
         layer.state.visible = False
-        viewer.add_subset(class_slider_subset)
+        slider_viewer.add_subset(student_slider_subset)
+
+        
+        if len(all_data.subsets) == 0:
+            class_slider_subset = all_data.new_subset(label="class_slider_subset", alpha=1, markersize=10)
+        else:
+            class_slider_subset = all_data.subsets[0]
+        class_slider_viewer = gjapp.new_data_viewer(CDSScatterView, data=all_data, show=False)
+        class_slider_viewer.state.x_att = all_data.id['est_dist']
+        class_slider_viewer.state.y_att = all_data.id['velocity']
+        class_slider_viewer.state.title = "Stage 5 All Classes Data Viewer"
+        class_layer = class_slider_viewer.layers[0]
+        class_layer.state.size = 25
+        class_layer.state.visible = False
+        class_slider_viewer.add_subset(class_slider_subset)
 
         hist_viewer = gjapp.new_data_viewer(CDSHistogramView, data=class_summ_data, show=False)
-        hist_viewer.state.x_att = class_summ_data.id['age']
-        def _update_bins(*args):
+        hist_viewer.state.x_att = class_summ_data.id['age_value']
+        hist_viewer.state.title = "My class ages (5 galaxies each)"
+
+        class_hist_viewer = gjapp.new_data_viewer(CDSHistogramView, data=all_class_summ_data, show=False)
+        class_hist_viewer.state.x_att = all_class_summ_data.id['age_value']
+        class_hist_viewer.state.title = "All class ages (5 galaxies each)"
+
+        def _update_bins(viewer, *args):
             props = ('hist_n_bin', 'hist_x_min', 'hist_x_max')
-            with delay_callback(hist_viewer.state, *props):
-                layer = hist_viewer.layers[0] # only works cuz there is only one layer 
-                component = hist_viewer.state.x_att                   
+            with delay_callback(viewer.state, *props):
+                layer = viewer.layers[0] # only works cuz there is only one layer 
+                component = viewer.state.x_att                   
                 xmin = round(layer.layer.data[component].min(), 0) - 0.5
                 xmax = round(layer.layer.data[component].max(), 0) + 0.5
-                hist_viewer.state.hist_n_bin = int(xmax - xmin)
-                hist_viewer.state.hist_x_min = xmin
-                hist_viewer.state.hist_x_max = xmax
-                hist_viewer.state.title = "My class ages (5 galaxies each)" # This is title for viewer on age_dis1 - con_int3
+                viewer.state.hist_n_bin = int(xmax - xmin)
+                viewer.state.hist_x_min = xmin
+                viewer.state.hist_x_max = xmax
         
-        _update_bins()
-        
-        gjapp.data_collection.hub.subscribe(gjapp.data_collection, NumericalDataChangedMessage,
-                           handler=_update_bins)
-        return gjapp, viewer, test_data, hist_viewer, class_glue_data, class_slider_subset
+        for viewer in (hist_viewer, class_hist_viewer):
+            _update_bins(viewer)
+            gjapp.data_collection.hub.subscribe(gjapp.data_collection, NumericalDataChangedMessage,
+                                                handler=partial(_update_bins, viewer))
 
-    gjapp, viewer, test_data, hist_viewer, class_glue_data, class_slider_subset = solara.use_memo(data_setup, [])
+        return gjapp, slider_viewer, hist_viewer, class_glue_data, class_hist_viewer, class_slider_viewer, all_data
+
+    gjapp, slider_viewer, hist_viewer, class_glue_data, class_hist_viewer, class_slider_viewer, all_data = solara.use_memo(data_setup, [])
     
     # Mount external javascript libraries
     def _load_math_jax():
@@ -294,24 +311,24 @@ def Page():
             def toggle_viewer():
                 test.value = not test.value
 
-            def update_class_slider_subset(id, highlighted):
-                class_slider_subset.subset_state = RangeSubsetState(id, id, class_glue_data.id['student_id'])
+            def update_student_slider_subset(id, highlighted):
+                student_slider_subset = class_glue_data.subsets[0]
+                student_slider_subset.subset_state = RangeSubsetState(id, id, class_glue_data.id['student_id'])
                 color = highlight_color if highlighted else default_color
-                class_slider_subset.style.color = color
+                student_slider_subset.style.color = color
 
             with rv.Col():
                 with solara.Card(style="background-color: #F06292;"):
                     solara.Markdown("Our class comparison viewer with slider goes here")
                     if test.value:
-                        ViewerLayout(viewer=gjapp.viewers[0])
-                        class_glue_data = gjapp.data_collection["Class Data"]
+                        ViewerLayout(viewer=slider_viewer)
                         class_summ_data = gjapp.data_collection["Class Summaries"]
                         IdSlider(gjapp=gjapp,
                                  data=class_summ_data,
-                                 on_id=update_class_slider_subset,
+                                 on_id=update_student_slider_subset,
                                  highlight_ids=[1],
-                                 id_component=class_summ_data.id['student_id'],
-                                 value_component=class_summ_data.id['age'],
+                                 id_component=class_summ_data.id['id'],
+                                 value_component=class_summ_data.id['age_value'],
                                  default_color=default_color,
                                  highlight_color=highlight_color,
                         )
@@ -358,9 +375,28 @@ def Page():
                         "class_high_age": component_state.class_high_age.value,
                     }
                 )
+
+            def update_class_slider_subset(id, highlighted):
+                class_slider_subset = all_data.subsets[0]
+                class_slider_subset.subset_state = RangeSubsetState(id, id, all_data.id['class_id'])
+                color = highlight_color if highlighted else default_color
+                class_slider_subset.style.color = color
+
             with rv.Col():
-                with solara.Card(style="background-color: #F06292;"):
-                    solara.Markdown("All viewer with slider goes here")
+                with solara.Card():
+                    ViewerLayout(viewer=class_slider_viewer)
+                    all_summ_data = gjapp.data_collection["All Class Summaries"]
+
+                    IdSlider(gjapp=gjapp,
+                             data=all_summ_data,
+                             on_id=update_class_slider_subset,
+                             highlight_ids=[1],
+                             id_component=all_summ_data.id['id'],
+                             value_component=all_summ_data.id['age_value'],
+                             default_color=default_color,
+                             highlight_color=highlight_color,
+                    )
+
 
                 with rv.Col(cols=10, offset=1):
                     UncertaintySlideshow(
@@ -466,17 +502,16 @@ def Page():
     if component_state.current_step_between(Marker.age_dis1c):
         with solara.ColumnsResponsive(12, large=[5,7]):
             with rv.Col():
-                with solara.Card(style="background-color: #F06292;"):
-                    StatisticsSelector(viewers=[hist_viewer],
-                                       glue_data=[class_glue_data],
-                                       units=["counts"],
-                                       transform=round,
-                                       selected=component_state.statistics_selection_class)
+                all_class_summ_data = GLOBAL_STATE.data_collection["All Class Summaries"]
+                StatisticsSelector(viewers=[class_hist_viewer],
+                                   glue_data=[all_class_summ_data],
+                                   units=["counts"],
+                                   transform=round,
+                                   selected=component_state.statistics_selection_class)
 
-                with solara.Card(style="background-color: #F06292;"):
-                    PercentageSelector(viewers=[hist_viewer],
-                                       glue_data=[class_glue_data],
-                                       selected=component_state.percentage_selection_class)
+                PercentageSelector(viewers=[class_hist_viewer],
+                                   glue_data=[all_class_summ_data],
+                                   selected=component_state.percentage_selection_class)
 
                 ScaffoldAlert(
                     GUIDELINE_ROOT / "GuidelineClassAgeDistributionc.vue",
@@ -540,11 +575,9 @@ def Page():
 
             with rv.Col():
                 if component_state.current_step_between(Marker.two_his1):
-                    with solara.Card(style="background-color: #F06292;"):
-                        ViewerLayout(hist_viewer)
+                    ViewerLayout(hist_viewer)
 
-                with solara.Card(style="background-color: #F06292;"):
-                    solara.Markdown("all data class histogram goes here")
+                ViewerLayout(class_hist_viewer) 
                
         ScaffoldAlert(
         GUIDELINE_ROOT / "GuidelineConfidenceIntervalReflect2c.vue",

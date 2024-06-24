@@ -100,11 +100,8 @@ class DatabaseAPI:
 
         for measurement in res_json["measurements"]:
             meas_dict = DatabaseAPI._parse_measurement(measurement)
-            print(meas_dict)
 
             measurement = StudentMeasurement(**meas_dict)
-            print("MEAS")
-            print(measurement)
             measurements.append(measurement)
 
         return measurements
@@ -196,10 +193,16 @@ class DatabaseAPI:
 
         measurements = []
         for measurement in res_json["measurements"]:
+            if measurement.get("class_id", None) is None:
+                continue
+            print(measurement)
             meas_dict = DatabaseAPI._parse_measurement(measurement, load_specdata=False)
+            print(meas_dict)
 
-            measurement = StudentMeasurement(**meas_dict)
-            measurements.append(measurement)
+            meas = StudentMeasurement(**meas_dict)
+            print(meas)
+            print("======")
+            measurements.append(meas)
 
         student_summaries = []
         for summary in res_json["studentData"]:

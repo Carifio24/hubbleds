@@ -25,6 +25,7 @@ class GalaxyData(BaseModel):
 
 class StudentMeasurement(BaseModel):
     student_id: Optional[int] = 0
+    class_id: Optional[int] = 0
     ang_size: Optional[float] = 0
     est_dist: Optional[float] = 0
     rest_wave: Optional[float] = 0.0
