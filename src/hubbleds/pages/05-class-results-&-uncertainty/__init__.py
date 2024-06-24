@@ -95,10 +95,12 @@ def Page():
         hist_viewer = gjapp.new_data_viewer(CDSHistogramView, data=class_summ_data, show=False)
         hist_viewer.state.x_att = class_summ_data.id['age_value']
         hist_viewer.state.title = "My class ages (5 galaxies each)"
+        hist_viewer.layers[0].state.color = "red"
 
         class_hist_viewer = gjapp.new_data_viewer(CDSHistogramView, data=all_class_summ_data, show=False)
         class_hist_viewer.state.x_att = all_class_summ_data.id['age_value']
         class_hist_viewer.state.title = "All class ages (5 galaxies each)"
+        class_hist_viewer.layers[0].state.color = "blue"
 
         def _update_bins(viewer, *args):
             props = ('hist_n_bin', 'hist_x_min', 'hist_x_max')
