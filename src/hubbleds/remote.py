@@ -51,9 +51,6 @@ class DatabaseAPI:
         meas_dict = {}
 
         for k, v in measurement.items():
-            if not (k.endswith("_value") or k == "galaxy"):
-                continue
-
             meas_dict[k.replace("_value", "")] = v
 
             if k != "galaxy":
@@ -184,8 +181,8 @@ class DatabaseAPI:
         for measurement in res_json["measurements"]:
             meas_dict = DatabaseAPI._parse_measurement(measurement, load_specdata=False)
 
-            measurement = StudentMeasurement(**meas_dict)
-            measurements.append(measurement)
+            meas = StudentMeasurement(**meas_dict)
+            measurements.append(meas)
 
         return measurements
 
