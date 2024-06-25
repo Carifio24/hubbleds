@@ -26,7 +26,6 @@ HubbleFitView = cds_viewer(
     viewer_tools=[
         'plotly:home',
         'plotly:zoom',
-        'plotly:rectangle',
         "hubble:linefit"
     ],
     label='Fit View',
