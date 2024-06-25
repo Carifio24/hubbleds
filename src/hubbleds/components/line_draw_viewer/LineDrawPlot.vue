@@ -19,6 +19,8 @@ export default {
     const layout = this.chart.layout;
     layout.xaxis.range = [xmin, xmax];
     layout.yaxis.range = [ymin, ymax];
+    layout.xaxis.title = { text: this.x_axis_label };
+    layout.yaxis.title = { text: this.y_axis_label };
 
     Plotly.newPlot(this.$refs[this.chart.uuid], this.chart.traces, layout, this.chart.config)
       .then(() => {
@@ -45,8 +47,8 @@ export default {
       automargin: true,
     };
 
-    const xaxis = { ...baseAxis, range: [0, 1], title: { text: this.x_axis_label } };
-    const yaxis = { ...baseAxis, range: [0, 1], title: { text: this.y_axis_label } };
+    const xaxis = { ...baseAxis, range: [0, 1] };
+    const yaxis = { ...baseAxis, range: [0, 1] };
     return {
       chart: {
         uuid: "abcde",

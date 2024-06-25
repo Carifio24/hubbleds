@@ -103,7 +103,7 @@ def Page():
         "marker": { "color": "red", "size": 12 },
         "hoverinfo": "none"
     }]
-    LineDrawViewer(plot_data)
+    LineDrawViewer(plot_data=plot_data, x_axis_label="Distance (Mpc)", y_axis_label="Velocity (km / s)")
 
     # if LOCAL_STATE.debug_mode:
 
