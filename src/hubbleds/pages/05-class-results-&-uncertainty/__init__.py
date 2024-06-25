@@ -21,7 +21,7 @@ from ...components import UncertaintySlideshow
 
 from ...state import GLOBAL_STATE, LOCAL_STATE, mc_callback, mc_serialize_score, get_free_response, fr_callback
 from .component_state import ComponentState, Marker
-from ...data_models.student import class_data
+from ...data_models.student import class_data, student_data
 
 from cosmicds.components import MathJaxSupport, PlotlySupport
 
@@ -45,6 +45,9 @@ def Page():
             LOCAL_STATE.stage_5_class_data_students.value = student_ids
         class_data.update_measurements(class_measurements)
 
+        student_glue_data = models_to_glue_data(student_data.measurements, label="My Data", ignore_components=["galaxy"])
+        student_glue_data = GLOBAL_STATE.add_or_update_data(student_glue_data)
+
         all_measurements, student_summaries, class_summaries = DatabaseAPI.get_all_data()
 
         gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
@@ -52,6 +55,16 @@ def Page():
         class_data_points = class_data.get_by_student_ids(LOCAL_STATE.stage_5_class_data_students.value)
         class_glue_data = models_to_glue_data(class_data_points, label="Class Data")
         class_glue_data = GLOBAL_STATE.add_or_update_data(class_glue_data)
+
+        for component in ("est_dist", "velocity"):
+            gjapp.add_link(student_glue_data, component, class_glue_data, component)
+
+        layer_viewer = gjapp.new_data_viewer(CDSScatterView, data=class_glue_data, show=False)
+        layer_viewer.state.x_att = class_glue_data.id['est_dist']
+        layer_viewer.state.y_att = class_glue_data.id['velocity']
+        layer_viewer.add_data(student_glue_data)
+        layer_viewer.state.x_axislabel = "Distance (Mpc)"
+        layer_viewer.state.y_axislabel = "Velocity"
 
         class_summ_data = make_summary_data(class_glue_data, input_id_field="student_id", output_id_field="id", label="Class Summaries")
         class_summ_data = GLOBAL_STATE.add_or_update_data(class_summ_data)
@@ -64,7 +77,7 @@ def Page():
 
         all_class_summ_data = models_to_glue_data(class_summaries, label="All Class Summaries")
         all_class_summ_data = GLOBAL_STATE.add_or_update_data(all_class_summ_data)
-        
+
         if len(class_glue_data.subsets) == 0:
             student_slider_subset = class_glue_data.new_subset(label="student_slider_subset", alpha=1, markersize=10)
         else:
@@ -117,9 +130,9 @@ def Page():
             gjapp.data_collection.hub.subscribe(gjapp.data_collection, NumericalDataChangedMessage,
                                                 handler=partial(_update_bins, viewer))
 
-        return gjapp, slider_viewer, hist_viewer, class_glue_data, class_hist_viewer, class_slider_viewer, all_data
+        return gjapp, slider_viewer, hist_viewer, class_hist_viewer, class_slider_viewer, layer_viewer
 
-    gjapp, slider_viewer, hist_viewer, class_glue_data, class_hist_viewer, class_slider_viewer, all_data = solara.use_memo(data_setup, [])
+    gjapp, slider_viewer, hist_viewer, class_hist_viewer, class_slider_viewer, layer_viewer = solara.use_memo(data_setup, [])
     
     # Mount external javascript libraries
     def _load_math_jax():
@@ -217,8 +230,7 @@ def Page():
                 )
 
             with rv.Col():
-                with solara.Card(style="background-color: #F06292;"):
-                    solara.Markdown("Our class layer viewer goes here")
+                ViewerLayout(viewer=layer_viewer)
 
 
 # --------------------- Row 2: SLIDER VERSION: OUR DATA HUBBLE VIEWER -----------------------
@@ -313,6 +325,7 @@ def Page():
                 test.value = not test.value
 
             def update_student_slider_subset(id, highlighted):
+                class_glue_data = gjapp.data_collection["Class Data"]
                 student_slider_subset = class_glue_data.subsets[0]
                 student_slider_subset.subset_state = RangeSubsetState(id, id, class_glue_data.id['student_id'])
                 color = highlight_color if highlighted else default_color
@@ -378,6 +391,7 @@ def Page():
                 )
 
             def update_class_slider_subset(id, highlighted):
+                all_data = gjapp.data_collection["All Measurements"]
                 class_slider_subset = all_data.subsets[0]
                 class_slider_subset.subset_state = RangeSubsetState(id, id, all_data.id['class_id'])
                 color = highlight_color if highlighted else default_color

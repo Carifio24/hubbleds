@@ -134,11 +134,14 @@ def data_summary_for_component(data, component_id):
 
 
 M = TypeVar("M", bound=BaseModel)
-def models_to_glue_data(items: List[M], label=None) -> Data:
+def models_to_glue_data(items: List[M], label=None, ignore_components=None) -> Data:
     data_dict = {}
     if items:
       t = type(items[0])
+      ignore = ignore_components or []
       for field in t.model_fields.keys():
+          if field in ignore:
+              continue
           data_dict[field] = [getattr(m, field) for m in items]
     if label:
         data_dict["label"] = label
