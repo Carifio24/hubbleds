@@ -3,12 +3,12 @@ import solara
 
 
 @solara.component_vue("LineDrawPlot.vue")
-def LineDrawPlot(active, event_line_drawn=None, plot_data=None):
+def LineDrawPlot(active, event_line_drawn=None, plot_data=None, x_axis_label=None, y_axis_label=None):
     pass
 
 
 @solara.component
-def LineDrawViewer(plot_data=None):
+def LineDrawViewer(plot_data=None, x_axis_label=None, y_axis_label=None):
 
     active = solara.use_reactive(False)
 
@@ -30,4 +30,4 @@ def LineDrawViewer(plot_data=None):
             draw_button = solara.IconButton(icon_name="mdi-message-draw", on_click=on_draw_clicked)
             rv.BtnToggle(v_model="selected", children=[draw_button], background_color="primary", borderless=True)
 
-        LineDrawPlot(active=active.value, event_line_drawn=None, plot_data=plot_data)
+        LineDrawPlot(active=active.value, event_line_drawn=None, plot_data=plot_data, x_axis_label=x_axis_label, y_axis_label=y_axis_label)

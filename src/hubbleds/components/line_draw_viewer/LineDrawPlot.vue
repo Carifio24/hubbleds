@@ -1,7 +1,7 @@
 <script>
 export default {
   name: "LineDrawPlot",
-  props: ["active", "line_drawn", "plot_data"],
+  props: ["active", "line_drawn", "plot_data", "x_axis_label", "y_axis_label"],
   async mounted() {
     await window.plotlyPromise;
 
@@ -45,8 +45,8 @@ export default {
       automargin: true,
     };
 
-    const xaxis = { ...baseAxis, range: [0, 1] };
-    const yaxis = { ...baseAxis, range: [0, 1] };
+    const xaxis = { ...baseAxis, range: [0, 1], title: { text: this.x_axis_label } };
+    const yaxis = { ...baseAxis, range: [0, 1], title: { text: this.y_axis_label } };
     return {
       chart: {
         uuid: "abcde",

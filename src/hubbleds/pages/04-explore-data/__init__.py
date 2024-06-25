@@ -96,7 +96,13 @@ def Page():
     
     distances = [t.est_dist for t in class_data_points]
     velocities = [t.velocity for t in class_data_points]
-    plot_data = [{ "x": distances, "y": velocities, "mode": "markers", "marker": { "color": "red", "size": 12 }, "hoverinfo": "none" }]
+    plot_data = [{
+        "x": distances,
+        "y": velocities,
+        "mode": "markers",
+        "marker": { "color": "red", "size": 12 },
+        "hoverinfo": "none"
+    }]
     LineDrawViewer(plot_data)
 
     # if LOCAL_STATE.debug_mode:
