@@ -48,8 +48,6 @@ def Page():
         student_glue_data = models_to_glue_data(student_data.measurements, label="My Data", ignore_components=["galaxy"])
         student_glue_data = GLOBAL_STATE.add_or_update_data(student_glue_data)
 
-        all_measurements, student_summaries, class_summaries = DatabaseAPI.get_all_data()
-
         gjapp = JupyterApplication(GLOBAL_STATE.data_collection, GLOBAL_STATE.session)
 
         class_data_points = class_data.get_by_student_ids(LOCAL_STATE.stage_5_class_data_students.value)
@@ -69,14 +67,20 @@ def Page():
         class_summ_data = make_summary_data(class_glue_data, input_id_field="student_id", output_id_field="id", label="Class Summaries")
         class_summ_data = GLOBAL_STATE.add_or_update_data(class_summ_data)
 
-        all_data = models_to_glue_data(all_measurements, label="All Measurements")
-        all_data = GLOBAL_STATE.add_or_update_data(all_data)
+        if "All Measurements" in GLOBAL_STATE.data_collection:
+            all_measurements, student_summaries, class_summaries = DatabaseAPI.get_all_data()
+            all_data = models_to_glue_data(all_measurements, label="All Measurements")
+            all_data = GLOBAL_STATE.add_or_update_data(all_data)
+        
+            student_summ_data = models_to_glue_data(student_summaries, label="All Student Summaries")
+            student_summ_data = GLOBAL_STATE.add_or_update_data(student_summ_data)
 
-        student_summ_data = models_to_glue_data(student_summaries, label="All Student Summaries")
-        student_summ_data = GLOBAL_STATE.add_or_update_data(student_summ_data)
-
-        all_class_summ_data = models_to_glue_data(class_summaries, label="All Class Summaries")
-        all_class_summ_data = GLOBAL_STATE.add_or_update_data(all_class_summ_data)
+            all_class_summ_data = models_to_glue_data(class_summaries, label="All Class Summaries")
+            all_class_summ_data = GLOBAL_STATE.add_or_update_data(all_class_summ_data)
+        else:
+            all_data = GLOBAL_STATE.data_collection["All Measurements"]
+            student_summ_data = GLOBAL_STATE.data_collection["All Student Summaries"]
+            all_class_summ_data = GLOBAL_STATE.data_collection["All Class Summaries"]
 
         if len(class_glue_data.subsets) == 0:
             student_slider_subset = class_glue_data.new_subset(label="student_slider_subset", alpha=1, markersize=10)
