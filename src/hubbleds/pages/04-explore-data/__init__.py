@@ -70,14 +70,16 @@ def Page():
 
     def _load_class_data():
         class_measurements = DatabaseAPI.get_class_measurements()
-
-        # If we haven't already marked the student IDs used for stage 4 data, do that
         if not LOCAL_STATE.stage_4_class_data_students.value:
             student_ids = list(np.unique([m.student_id for m in class_measurements]))
             LOCAL_STATE.stage_4_class_data_students.value = student_ids
         class_data.update_measurements(class_measurements)
 
-    solara.use_memo(_load_class_data, dependencies=[])
+        class_data_points = class_data.get_by_student_ids(LOCAL_STATE.stage_4_class_data_students.value)
+
+        return class_data_points
+
+    class_data_points = solara.use_memo(_load_class_data, dependencies=[])
 
     # Custom vue-only components have to be registered in the Page element
     #  currently, otherwise they will not be available in the front-end
@@ -92,8 +94,9 @@ def Page():
 
     StateEditor(Marker, component_state)
     
-    x = [0.1 * i for i in range(1, 11)]
-    plot_data = [{ "x": x, "y": [1 / (1 + ((1-t)/t)**2) for t in x], "mode": "markers", "marker": { "color": "red", "size": 12 }, "hoverinfo": "none" }]
+    distances = [t.est_dist for t in class_data_points]
+    velocities = [t.velocity for t in class_data_points]
+    plot_data = [{ "x": distances, "y": velocities, "mode": "markers", "marker": { "color": "red", "size": 12 }, "hoverinfo": "none" }]
     LineDrawViewer(plot_data)
 
     # if LOCAL_STATE.debug_mode:

@@ -77,7 +77,6 @@ def Page():
         layer.state.size = 25
         layer.state.visible = False
         slider_viewer.add_subset(student_slider_subset)
-
         
         if len(all_data.subsets) == 0:
             class_slider_subset = all_data.new_subset(label="class_slider_subset", alpha=1, markersize=10)
