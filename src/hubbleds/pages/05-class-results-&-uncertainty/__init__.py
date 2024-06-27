@@ -68,6 +68,10 @@ def Page():
         class_summ_data = GLOBAL_STATE.add_or_update_data(class_summ_data)
 
         if "All Measurements" in GLOBAL_STATE.data_collection:
+            all_data = GLOBAL_STATE.data_collection["All Measurements"]
+            student_summ_data = GLOBAL_STATE.data_collection["All Student Summaries"]
+            all_class_summ_data = GLOBAL_STATE.data_collection["All Class Summaries"]
+        else:
             all_measurements, student_summaries, class_summaries = DatabaseAPI.get_all_data()
             all_data = models_to_glue_data(all_measurements, label="All Measurements")
             all_data = GLOBAL_STATE.add_or_update_data(all_data)
@@ -77,10 +81,6 @@ def Page():
 
             all_class_summ_data = models_to_glue_data(class_summaries, label="All Class Summaries")
             all_class_summ_data = GLOBAL_STATE.add_or_update_data(all_class_summ_data)
-        else:
-            all_data = GLOBAL_STATE.data_collection["All Measurements"]
-            student_summ_data = GLOBAL_STATE.data_collection["All Student Summaries"]
-            all_class_summ_data = GLOBAL_STATE.data_collection["All Class Summaries"]
 
         if len(class_glue_data.subsets) == 0:
             student_slider_subset = class_glue_data.new_subset(label="student_slider_subset", alpha=1, markersize=10)
