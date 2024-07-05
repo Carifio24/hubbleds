@@ -1,3 +1,4 @@
+from cosmicds.state import GlobalState
 from echo import delay_callback
 from glue.core import Data
 from glue.core.message import NumericalDataChangedMessage
@@ -5,13 +6,14 @@ from glue.core.subset import RangeSubsetState
 from glue_jupyter import JupyterApplication
 from glue_plotly.viewers import PlotlyBaseView
 import numpy as np
+from pydantic.main import BaseModel
 import solara
-from solara.toestand import Ref
+from solara.toestand import Reactive, Ref
 
 from functools import partial
 from pathlib import Path
 import reacton.ipyvuetify as rv
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 from cosmicds.components import PercentageSelector, ScaffoldAlert, StateEditor, StatisticsSelector, ViewerLayout
 from cosmicds.utils import empty_data_from_model_class
@@ -30,65 +32,24 @@ logger = setup_logger("STAGE 5")
 
 GUIDELINE_ROOT = Path(__file__).parent / "guidelines"
 
+def add_from_models_if_necessary(global_state: Reactive[GlobalState],
+                                 models: List[BaseModel],
+                                 label: str) -> Data:
+    if label not in global_state.value.glue_data_collection:
+        data = models_to_glue_data(models, label=label)
+        return global_state.value.add_or_update_data(data)
+    else:
+        return global_state.value.glue_data_collection[label]
+
 
 @solara.component
 def Page():
     loaded_component_state = solara.use_reactive(False)
+    class_data_added = Ref(COMPONENT_STATE.fields.class_data_added)
+    student_data_added = Ref(COMPONENT_STATE.fields.student_data_added)
+    links_setup = Ref(COMPONENT_STATE.fields.links_setup)
 
-    async def _load_component_state():
-        # Load stored component state from database, measurement data is
-        # considered higher-level and is loaded when the story starts
-        LOCAL_API.get_stage_state(GLOBAL_STATE, LOCAL_STATE, COMPONENT_STATE)
-
-        # TODO: What else to we need to do here?
-        logger.info("Finished loading component state for stage 4.")
-        loaded_component_state.set(True)
-
-    solara.lab.use_task(_load_component_state)
-    
-    class_data_loaded = solara.use_reactive(False)
-    async def _load_class_data():
-        class_measurements = LOCAL_API.get_class_measurements(GLOBAL_STATE, LOCAL_STATE)
-        measurements = Ref(LOCAL_STATE.fields.class_measurements)
-        student_ids = Ref(LOCAL_STATE.fields.stage_5_class_data_students)
-        if class_measurements and not student_ids.value:
-            ids = list(np.unique([m.student_id for m in class_measurements]))
-            student_ids.set(ids)
-        measurements.set(class_measurements)
-        class_data_loaded.set(True)
-
-    solara.lab.use_task(_load_class_data)
-
-
-    all_data_loaded = solara.use_reactive(False)
-    async def _load_all_data():
-
-        # This data is external to the current class and won't change
-        # so there's never a need to load it more than once
-        if "All Measurements" not in GLOBAL_STATE.value.glue_data_collection:
-            all_measurements, student_summaries, class_summaries = LOCAL_API.get_all_data(LOCAL_STATE)
-            measurements = Ref(LOCAL_STATE.fields.all_measurements)
-            stu_summaries = Ref(LOCAL_STATE.fields.student_summaries)
-            cls_summaries = Ref(LOCAL_STATE.fields.class_summaries)
-            measurements.set(all_measurements)
-            stu_summaries.set(student_summaries)
-            cls_summaries.set(class_summaries)
-
-        all_data_loaded.set(True)
-
-    solara.lab.use_task(_load_all_data)
-
-    def _load_student_data():
-        if not LOCAL_STATE.value.measurements_loaded:
-            print("Getting measurements for student")
-            LOCAL_API.get_measurements(GLOBAL_STATE, LOCAL_STATE)
-    # TODO: Using this inside a conditional threw an error
-    # Is that a general restriction?
-    # solara.lab.use_task(_load_student_data)
-
-
-    default_color = "#3A86FF"
-    highlight_color = "#FF5A00"
+    current_step = Ref(COMPONENT_STATE.fields.current_step)
 
     def glue_setup() -> Tuple[JupyterApplication, Dict[str, PlotlyBaseView]]:
         # NOTE: use_memo has to be part of the main page render. Including it
@@ -131,34 +92,29 @@ def Page():
             gjapp.data_collection.hub.subscribe(gjapp.data_collection, NumericalDataChangedMessage,
                                                 handler=partial(_update_bins, viewer))
 
-        return gjapp, viewers
+        class_measurements = LOCAL_API.get_class_measurements(GLOBAL_STATE, LOCAL_STATE)
+        measurements = Ref(LOCAL_STATE.fields.class_measurements)
+        student_ids = Ref(LOCAL_STATE.fields.stage_5_class_data_students)
+        if class_measurements and not student_ids.value:
+            ids = list(np.unique([m.student_id for m in class_measurements]))
+            student_ids.set(ids)
+        measurements.set(class_measurements)
 
-    gjapp, viewers = solara.use_memo(glue_setup, dependencies=[])
-
-
-    links_setup = solara.use_reactive(False)
-    def _setup_links(_value: bool):
-        print(class_data_added.value, student_data_added.value)
-        if not (class_data_added.value and student_data_added.value):
-            return
-        student_data = gjapp.data_collection["My Data"]
-        class_data = gjapp.data_collection["Class Data"]
-        for component in ("est_dist_value", "velocity_value"):
-            gjapp.add_link(student_data, component, class_data, component)
-        links_setup.set(True)
-        print("_setup_links")
-        print(viewers["layer"].state)
-        viewers["layer"].add_data(student_data)
-
-    class_data_added = solara.use_reactive(False)
-    def _on_class_data_loaded(value: bool):
-        if not value:
-            return
-        
         class_ids = LOCAL_STATE.value.stage_5_class_data_students
         class_data_points = [m for m in LOCAL_STATE.value.class_measurements if m.student_id in class_ids]
-        class_data = models_to_glue_data(class_data_points, label="Class Data")
-        class_data = GLOBAL_STATE.value.add_or_update_data(class_data)
+        class_data = add_from_models_if_necessary(GLOBAL_STATE, class_data_points, label="Class Data")
+
+        print(class_data.size)
+
+        if "Class Summaries" not in GLOBAL_STATE.value.glue_data_collection:
+            class_data = GLOBAL_STATE.value.glue_data_collection["Class Data"]
+            class_summary_data = make_summary_data(class_data,
+                                                   input_id_field="student_id",
+                                                   output_id_field="id",
+                                                   label="Class Summaries")
+            class_summary_data = GLOBAL_STATE.value.add_or_update_data(class_summary_data)
+        else:
+            class_summary_data = GLOBAL_STATE.value.glue_data_collection["Class Summaries"]
 
         layer_viewer = viewers["layer"]
         layer_viewer.state.x_axislabel = "Distance (Mpc)"
@@ -169,8 +125,6 @@ def Page():
         layer_viewer.state.x_att = class_data.id['est_dist_value']
         layer_viewer.state.y_att = class_data.id['velocity_value']
         class_data_added.set(True)
-        print("_on_class_data_loaded")
-        print(layer_viewer.state)
 
         if len(class_data.subsets) == 0:
             student_slider_subset = class_data.new_subset(label="student_slider_subset", alpha=1, markersize=10)
@@ -184,55 +138,30 @@ def Page():
         slider_viewer.layers[0].state.visible = False
         slider_viewer.add_subset(student_slider_subset)
 
-        class_summary_data = make_summary_data(class_data,
-                                               input_id_field="student_id",
-                                               output_id_field="id",
-                                               label="Class Summaries")
-        class_summary_data = GLOBAL_STATE.value.add_or_update_data(class_summary_data)
-
         hist_viewer = viewers["student_hist"]
         hist_viewer.add_data(class_summary_data)
         hist_viewer.state.x_att = class_summary_data.id['age_value']
         hist_viewer.state.title = "My class ages (5 galaxies each)"
         hist_viewer.layers[0].state.color = "red"
 
-    class_data_loaded.subscribe(_on_class_data_loaded)
-
-    measurements_loaded = Ref(LOCAL_STATE.fields.measurements_loaded)
-    student_data_added = solara.use_reactive(False)
-    def _on_student_data_loaded(value: bool):
-        if not value:
-            return
-        student_data = models_to_glue_data(LOCAL_STATE.value.measurements, label="My Data", ignore_components=["galaxy"])
-        # NB: If there are no components, Data::size returns 1 (empty product)
-        # so that can't be our check
-        if not student_data.components:
-            student_data = empty_data_from_model_class(StudentMeasurement, label="My Data")
-        student_data = GLOBAL_STATE.value.add_or_update_data(student_data)
-        student_data_added.set(True)
-
-
-    if measurements_loaded.value:
-        _on_student_data_loaded(True)
-    else:
-        measurements_loaded.subscribe(_on_student_data_loaded)
-
-    def _on_all_data_loaded(value):
-        if not value:
-            return
+        # This data is external to the current class and won't change
+        # so there's never a need to load it more than once
+        if "All Measurements" not in GLOBAL_STATE.value.glue_data_collection:
+            all_measurements, student_summaries, class_summaries = LOCAL_API.get_all_data(LOCAL_STATE)
+            measurements = Ref(LOCAL_STATE.fields.all_measurements)
+            stu_summaries = Ref(LOCAL_STATE.fields.student_summaries)
+            cls_summaries = Ref(LOCAL_STATE.fields.class_summaries)
+            measurements.set(all_measurements)
+            stu_summaries.set(student_summaries)
+            cls_summaries.set(class_summaries)
 
         all_measurements = LOCAL_STATE.value.all_measurements
         student_summaries = LOCAL_STATE.value.student_summaries
         class_summaries = LOCAL_STATE.value.class_summaries
 
-        all_data = models_to_glue_data(all_measurements, label="All Measurements")
-        all_data = GLOBAL_STATE.value.add_or_update_data(all_data)
-
-        student_summ_data = models_to_glue_data(student_summaries, label="All Student Summaries")
-        student_summ_data = GLOBAL_STATE.value.add_or_update_data(student_summ_data)
-
-        all_class_summ_data = models_to_glue_data(class_summaries, label="All Class Summaries")
-        all_class_summ_data = GLOBAL_STATE.value.add_or_update_data(all_class_summ_data)
+        all_data = add_from_models_if_necessary(GLOBAL_STATE, all_measurements, label="All Measurements")
+        student_summ_data = add_from_models_if_necessary(GLOBAL_STATE, student_summaries, label="All Student Summaries")
+        all_class_summ_data = add_from_models_if_necessary(GLOBAL_STATE, class_summaries, label="All Class Summaries")
 
         if len(all_data.subsets) == 0:
             class_slider_subset = all_data.new_subset(label="class_slider_subset", alpha=1, markersize=10)
@@ -253,19 +182,80 @@ def Page():
         hist_viewer.state.title = "All class ages (5 galaxies each)"
         hist_viewer.layers[0].state.color = "blue"
 
-    all_data_loaded.subscribe(_on_all_data_loaded)
+        return gjapp, viewers
+
+
+    def _setup_links(_value: bool):
+        print(class_data_added.value, student_data_added.value)
+        if not (class_data_added.value and student_data_added.value):
+            return
+        student_data = gjapp.data_collection["My Data"]
+        class_data = gjapp.data_collection["Class Data"]
+        for component in ("est_dist_value", "velocity_value"):
+            gjapp.add_link(student_data, component, class_data, component)
+        links_setup.set(True)
+        print("_setup_links")
+        print(viewers["layer"].state)
+        viewers["layer"].add_data(student_data)
 
     student_data_added.subscribe(_setup_links)
     class_data_added.subscribe(_setup_links)
+
+    async def _load_component_state():
+        # Load stored component state from database, measurement data is
+        # considered higher-level and is loaded when the story starts
+        LOCAL_API.get_stage_state(GLOBAL_STATE, LOCAL_STATE, COMPONENT_STATE)
+
+        # TODO: What else to we need to do here?
+        logger.info("Finished loading component state for stage 4.")
+        loaded_component_state.set(True)
+
+    solara.lab.use_task(_load_component_state)
+
+    async def _load_student_data():
+        if not LOCAL_STATE.value.measurements_loaded:
+            print("Getting measurements for student")
+            LOCAL_API.get_measurements(GLOBAL_STATE, LOCAL_STATE)
+    # TODO: Using this inside a conditional threw an error
+    # Is that a general restriction?
+    solara.lab.use_task(_load_student_data)
+
+
+    default_color = "#3A86FF"
+    highlight_color = "#FF5A00"
+
+
+
+    gjapp, viewers = solara.use_memo(glue_setup, dependencies=[])
+
+
+    measurements_loaded = Ref(LOCAL_STATE.fields.measurements_loaded)
+    def _on_student_data_loaded(value: bool):
+        if not value:
+            return
+        student_data = models_to_glue_data(LOCAL_STATE.value.measurements, label="My Data", ignore_components=["galaxy"])
+        # NB: If there are no components, Data::size returns 1 (empty product)
+        # so that can't be our check
+        if not student_data.components:
+            student_data = empty_data_from_model_class(StudentMeasurement, label="My Data")
+        student_data = GLOBAL_STATE.value.add_or_update_data(student_data)
+        student_data_added.set(True)
+
+    if measurements_loaded.value:
+        _on_student_data_loaded(True)
+    else:
+        measurements_loaded.subscribe(_on_student_data_loaded)
+
+
 
     StateEditor(Marker, COMPONENT_STATE)
 
     #--------------------- Row 1: OUR DATA HUBBLE VIEWER -----------------------
     if (
-            COMPONENT_STATE.value.current_step_between(Marker.ran_var1, Marker.fin_cla1) \
+            Marker.is_between(current_step.value, Marker.ran_var1, Marker.fin_cla1)
                     or \
-            COMPONENT_STATE.value.current_step_between(Marker.cla_dat1, Marker.you_age1c)
-    ):
+            Marker.is_between(current_step.value, Marker.cla_dat1, Marker.you_age1c)
+        ):        
         with solara.ColumnsResponsive(12, large=[5,7]):
             with rv.Col():
                 ScaffoldAlert(
@@ -329,7 +319,7 @@ def Page():
                     ViewerLayout(viewer=viewers["layer"])
 
     # --------------------- Row 2: SLIDER VERSION: OUR DATA HUBBLE VIEWER -----------------------
-    if COMPONENT_STATE.value.current_step_between(Marker.cla_res1, Marker.con_int3):
+    if Marker.is_between(current_step.value, Marker.cla_res1, Marker.con_int3):
         with solara.ColumnsResponsive(12, large=[5,7]):
             with rv.Col():
                 ScaffoldAlert(
@@ -389,8 +379,8 @@ def Page():
                 )
                 ScaffoldAlert(
                     GUIDELINE_ROOT / "GuidelineClassAgeRange4.vue",
-                    event_next_callback=transition_next(COMPONENT_STATE),
-                    event_back_callback=transition_previous(COMPONENT_STATE),
+                    event_next_callback=lambda _: transition_next(COMPONENT_STATE),
+                    event_back_callback=lambda _: transition_previous(COMPONENT_STATE),
                     can_advance=COMPONENT_STATE.value.can_transition(next=True),
                     show=COMPONENT_STATE.value.is_current_step(Marker.cla_age4),
                     state_view={
@@ -426,6 +416,7 @@ def Page():
             with rv.Col():
                 with solara.Card(style="background-color: #F06292;"):
                     ViewerLayout(viewer=viewers["class_slider"])
+                    print(gjapp.data_collection)
                     class_summary_data = gjapp.data_collection["Class Summaries"]
                     IdSlider(
                         gjapp=gjapp,
@@ -438,7 +429,7 @@ def Page():
                         highlight_color=highlight_color
                     )
 
-        if COMPONENT_STATE.value.current_step_between(Marker.lea_unc1, Marker.you_age1c):
+        if Marker.is_between(current_step.value, Marker.lea_unc1, Marker.you_age1c):
             with solara.ColumnsResponsive(12, large=[5,7]):
                 with rv.Col():
                     pass
@@ -455,8 +446,8 @@ def Page():
                         )
             
         #--------------------- Row 3: ALL DATA HUBBLE VIEWER - during class sequence -----------------------
-
-        if COMPONENT_STATE.value.current_step_at_or_after(Marker.cla_res1c):
+        
+        if Marker.is_at_or_after(current_step.value, Marker.cla_res1c):
             with solara.ColumnsResponsive(12, large=[5,7]):
                 with rv.Col():
                     ScaffoldAlert(
@@ -509,7 +500,8 @@ def Page():
                     )
 
         #--------------------- Row 4: OUR CLASS HISTOGRAM VIEWER -----------------------
-        if COMPONENT_STATE.value.current_step_between(Marker.age_dis1, Marker.con_int3):
+        if Marker.is_between(current_step.value, Marker.age_dis1, Marker.con_int3):
+        # if COMPONENT_STATE.value.current_step_between(Marker.age_dis1, Marker.con_int3):
             with solara.ColumnsResponsive(12, large=[5,7]):
                 with rv.Col():
                     class_summary_data = gjapp.data_collection["Class Summaries"]
@@ -602,7 +594,8 @@ def Page():
 
         #--------------------- Row 5: ALL DATA HISTOGRAM VIEWER -----------------------
 
-        if COMPONENT_STATE.value.current_step_between(Marker.age_dis1c):
+        if Marker.is_at_or_after(current_step.value, Marker.age_dis1c):
+        # if COMPONENT_STATE.value.current_step_between(Marker.age_dis1c):
             with solara.ColumnsResponsive(12, large=[5,7]):
                 with rv.Col():
                     all_class_summary_data = gjapp.data_collection["All Class Summaries"]

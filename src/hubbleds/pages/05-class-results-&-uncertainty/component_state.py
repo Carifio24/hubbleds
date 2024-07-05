@@ -77,6 +77,13 @@ class ComponentState(BaseComponentState, BaseState):
     percentage_selection_class: str | None = None
     statistics_selection_class: str | None = None
 
+    links_setup: bool = False
+    class_data_loaded: bool = False
+    all_data_loaded: bool = False
+    student_data_added: bool = False
+    class_data_added: bool = False
+    
+
     @field_validator("current_step", mode="before")
     def convert_int_to_enum(cls, v: Any) -> Marker:
         if isinstance(v, int):
