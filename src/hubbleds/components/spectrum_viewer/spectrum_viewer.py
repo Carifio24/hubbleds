@@ -19,6 +19,7 @@ df = Table(
 def SpectrumViewer(
     data: DataFrame,
     obs_wave: float | None = None,
+    redshift: float | None = None,
     spectrum_click_enabled: bool = False,
     on_obs_wave_measured: Callable = None,
     on_obs_wave_tool_clicked: Callable = lambda: None,
@@ -79,6 +80,15 @@ def SpectrumViewer(
             # annotation_font_size=12,
             # annotation_position="top right",
             visible=vertical_line_visible.value and obs_wave > 0.0,
+        )
+
+        rest = obs_wave / (1 + redshift) if (redshift is not None and obs_wave is not None) else None
+        fig.add_vline(
+            x=rest,
+            line_width=1,
+            line_color="black",
+            line_dash="dash",
+            visible=toggle_group_state == 1,
         )
 
         fig.add_shape(

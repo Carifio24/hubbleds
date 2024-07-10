@@ -128,6 +128,14 @@ class LocalState(BaseLocalState):
             ),
             None,
         )
+
+    def get_galaxy_data(self, galaxy_id: int) -> GalaxyData | None:
+        return next(
+            (
+                galaxy for galaxy in self.galaxies if galaxy.id == galaxy_id
+            ),
+            None,
+        )
     
     def question_completed(self, tag: str) -> bool:
         if tag in self.free_responses:

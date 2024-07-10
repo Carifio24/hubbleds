@@ -44,6 +44,12 @@ def selected_measurement():
     return LOCAL_STATE.value.get_measurement(COMPONENT_STATE.value.selected_galaxy)
 
 
+@solara.lab.computed
+def selected_redshift():
+    galaxy_data = LOCAL_STATE.value.get_galaxy_data(COMPONENT_STATE.value.selected_galaxy)
+    return galaxy_data.z if galaxy_data is not None else None
+
+
 @solara.component
 def Page():
     loaded_component_state = solara.use_reactive(False)
@@ -743,6 +749,7 @@ def Page():
                             else None
                         ),
                         obs_wave=COMPONENT_STATE.value.obs_wave,
+                        redshift=selected_redshift.value,
                         spectrum_click_enabled=COMPONENT_STATE.value.current_step_at_or_after(
                             Marker.obs_wav1
                         ),
