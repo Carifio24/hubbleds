@@ -74,16 +74,13 @@ def Page():
     all_data_loaded = solara.use_reactive(False)
     async def _load_all_data():
 
-        # This data is external to the current class and won't change
-        # so there's never a need to load it more than once
-        if "All Measurements" not in GLOBAL_STATE.value.glue_data_collection:
-            all_measurements, student_summaries, class_summaries = LOCAL_API.get_all_data(LOCAL_STATE)
-            measurements = Ref(LOCAL_STATE.fields.all_measurements)
-            stu_summaries = Ref(LOCAL_STATE.fields.student_summaries)
-            cls_summaries = Ref(LOCAL_STATE.fields.class_summaries)
-            measurements.set(all_measurements)
-            stu_summaries.set(student_summaries)
-            cls_summaries.set(class_summaries)
+        all_measurements, student_summaries, class_summaries = LOCAL_API.get_all_data(LOCAL_STATE)
+        measurements = Ref(LOCAL_STATE.fields.all_measurements)
+        stu_summaries = Ref(LOCAL_STATE.fields.student_summaries)
+        cls_summaries = Ref(LOCAL_STATE.fields.class_summaries)
+        measurements.set(all_measurements)
+        stu_summaries.set(student_summaries)
+        cls_summaries.set(class_summaries)
 
         all_data_loaded.set(True)
 
