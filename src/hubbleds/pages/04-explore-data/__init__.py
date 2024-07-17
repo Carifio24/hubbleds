@@ -1,16 +1,21 @@
+from glue_jupyter import JupyterApplication
 from hubbleds.base_component_state import transition_next, transition_previous
 import numpy as np
 from pathlib import Path
 import reacton.ipyvuetify as rv
 import solara
 from solara.toestand import Ref
+from typing import Tuple, cast
 
-from cosmicds.components import ScaffoldAlert, StateEditor
-from hubbleds.components import DataTable, HubbleExpUniverseSlideshow, LineDrawViewer
-from hubbleds.state import LOCAL_STATE, GLOBAL_STATE, get_multiple_choice, get_free_response, mc_callback, fr_callback
+from cosmicds.components import ScaffoldAlert, StateEditor, ViewerLayout
+from cosmicds.utils import empty_data_from_model_class
+from hubbleds.components import DataTable, HubbleExpUniverseSlideshow, LineDrawHandler
+from hubbleds.state import LOCAL_STATE, GLOBAL_STATE, StudentMeasurement, get_multiple_choice, get_free_response, mc_callback, fr_callback
+from hubbleds.viewers import HubbleFitLayerView
+from hubbleds.viewers.tools import LineDrawTool
 from .component_state import COMPONENT_STATE, Marker
 from hubbleds.remote import LOCAL_API
-from hubbleds.utils import AGE_CONSTANT
+from hubbleds.utils import AGE_CONSTANT, models_to_glue_data
 
 from cosmicds.logger import setup_logger
 
@@ -22,6 +27,9 @@ GUIDELINE_ROOT = Path(__file__).parent / "guidelines"
 @solara.component
 def Page():
     loaded_component_state = solara.use_reactive(False)
+
+
+    ### Set up the loading and writing of the component state
 
     async def _load_component_state():
         # Load stored component state from database, measurement data is
@@ -45,7 +53,15 @@ def Page():
 
     solara.lab.use_task(_write_component_state, dependencies=[COMPONENT_STATE.value])
 
-    class_plot_data = solara.use_reactive([])
+    ### Load in any data that we need
+
+    async def _load_student_data():
+        if not LOCAL_STATE.value.measurements_loaded:
+            print("Getting measurements for student")
+            LOCAL_API.get_measurements(GLOBAL_STATE, LOCAL_STATE)
+    solara.lab.use_task(_load_student_data)
+
+    class_data_loaded = solara.use_reactive(False)
     async def _load_class_data():
         class_measurements = LOCAL_API.get_class_measurements(GLOBAL_STATE, LOCAL_STATE)
         measurements = Ref(LOCAL_STATE.fields.class_measurements)
@@ -54,11 +70,98 @@ def Page():
             ids = [int(id) for id in np.unique([m.student_id for m in class_measurements])]
             student_ids.set(ids)
         measurements.set(class_measurements)
-
-        class_data_points = [m for m in class_measurements if m.student_id in student_ids.value] 
-        class_plot_data.set(class_data_points)
+        class_data_loaded.set(True)
 
     solara.lab.use_task(_load_class_data)
+
+
+    ## Set up glue viewers
+    ## This is done in a use_memo so that it only happens once
+
+    line_draw_active = solara.use_reactive(False)
+
+    def glue_setup() -> Tuple[JupyterApplication, HubbleFitLayerView]:
+        gjapp = JupyterApplication(
+            GLOBAL_STATE.value.glue_data_collection, GLOBAL_STATE.value.glue_session
+        )
+        
+        line_viewer = cast(HubbleFitLayerView, gjapp.new_data_viewer(HubbleFitLayerView, show=False))
+        line_draw_tool = cast(LineDrawTool, line_viewer.toolbar.tools["hubble:linedraw"])
+        line_draw_tool.on_activate(line_draw_active.set)
+
+        return gjapp, line_viewer
+
+    gjapp, line_viewer = solara.use_memo(glue_setup, dependencies=[])
+
+    class_data_added = solara.use_reactive(False)
+    student_data_added = solara.use_reactive(False)
+
+    links_setup = solara.use_reactive(False)
+    def _setup_links(_value: bool):
+        if not (class_data_added.value and student_data_added.value):
+            return
+        student_data = gjapp.data_collection["My Data"]
+        class_data = gjapp.data_collection["Class Data"]
+        for component in ("est_dist_value", "velocity_value"):
+            gjapp.add_link(student_data, component, class_data, component)
+        line_viewer.add_data(student_data)
+
+        links_setup.set(True)
+
+    def _on_student_data_loaded(value: bool):
+        if not value:
+            return
+
+        student_data = models_to_glue_data(LOCAL_STATE.value.measurements, label="My Data", ignore_components=["galaxy"])
+        # NB: If there are no components, Data::size returns 1 (empty product)
+        # so that can't be our check
+        if not student_data.components:
+            student_data = empty_data_from_model_class(StudentMeasurement, label="My Data")
+        student_data = GLOBAL_STATE.value.add_or_update_data(student_data)
+        student_data_added.set(True)
+
+    
+    measurements_loaded = Ref(LOCAL_STATE.fields.measurements_loaded)
+    if measurements_loaded.value:
+        _on_student_data_loaded(True)
+    else:
+        measurements_loaded.subscribe(_on_student_data_loaded)
+
+    def _on_class_data_loaded(value: bool):
+        if not value:
+            return
+
+        class_ids = LOCAL_STATE.value.stage_4_class_data_students
+        class_data_points = [m for m in LOCAL_STATE.value.class_measurements if m.student_id in class_ids]
+        class_data = models_to_glue_data(class_data_points, label="Class Data")
+        class_data = GLOBAL_STATE.value.add_or_update_data(class_data)
+
+        line_viewer.add_data(class_data)
+        line_viewer.state.x_att = class_data.id['est_dist_value']
+        line_viewer.state.y_att = class_data.id['velocity_value']
+        line_viewer.state.x_axislabel = "Distance (Mpc)"
+        line_viewer.state.y_axislabel = "Velocity"
+
+        class_data_added.set(True)
+
+    class_data_loaded.subscribe(_on_class_data_loaded)
+
+    student_data_added.subscribe(_setup_links)
+    class_data_added.subscribe(_setup_links)
+
+    @solara.lab.computed
+    def data_ready():
+        return student_data_added.value and class_data_added.value
+
+    if not data_ready.value:
+        rv.ProgressCircular(
+            width=3,
+            color="primary",
+            indeterminate=True,
+            size=100,
+        )
+        return
+
 
     StateEditor(Marker, COMPONENT_STATE, LOCAL_STATE, LOCAL_API)
 
@@ -258,22 +361,8 @@ def Page():
                         with solara.Card(style="background-color: var(--error);"):
                             solara.Markdown("Layer Toggle")
                     with rv.Col(class_="no-padding"):
-                        if class_plot_data.value:
-                            data = class_plot_data.value
-                            distances = [t.est_dist_value for t in data]
-                            velocities = [t.velocity_value for t in data]
-                            plot_data=[{
-                                "x": distances,
-                                "y": velocities,
-                                "mode": "markers",
-                                "marker": { "color": "red", "size": 12 },
-                                "hoverinfo": "none"
-                            }]
-                            best_fit_slope = Ref(LOCAL_STATE.fields.best_fit_slope)
-                            LineDrawViewer(plot_data=plot_data,
-                                           on_line_fit=best_fit_slope.set,
-                                           x_axis_label="Distance (Mpc)",
-                                           y_axis_label="Velocity (km / s)")
+                        LineDrawHandler(graph_class=line_viewer.unique_class, active=line_draw_active.value)
+                        ViewerLayout(viewer=line_viewer)
 
             with rv.Col(cols=10, offset=1):
                 if COMPONENT_STATE.value.current_step_at_or_after(
