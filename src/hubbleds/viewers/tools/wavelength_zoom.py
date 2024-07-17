@@ -1,5 +1,4 @@
 from echo import CallbackProperty
-from glue.config import viewer_tool
 from glue_plotly.viewers import PlotlyHZoomMode
 
 from cosmicds.config import register_tool

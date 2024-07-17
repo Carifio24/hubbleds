@@ -20,3 +20,4 @@ from .selection_tool import SelectionTool
 from .dotplot_tutorial_slideshow import DotplotTutorialSlideshow
 from .id_slider import IdSlider
 from .line_draw_viewer import LineDrawViewer
+from .line_draw_handler import LineDrawHandler

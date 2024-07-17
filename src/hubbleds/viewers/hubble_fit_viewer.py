@@ -1,4 +1,4 @@
-from echo import delay_callback, add_callback
+from echo import delay_callback
 from glue_plotly.viewers.scatter import PlotlyScatterView
 from .hubble_scatter_viewer import HubbleScatterViewerState
 from cosmicds.viewers import cds_viewer
@@ -37,6 +37,7 @@ HubbleFitLayerView = cds_viewer(
     name="HubbleFitLayerView",
     viewer_tools=[
         "hubble:linefit",
+        "hubble:linedraw",
     ],
     label='Layer View',
     state_cls=HubbleFitViewerState
