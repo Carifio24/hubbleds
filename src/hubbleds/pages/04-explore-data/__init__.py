@@ -46,6 +46,7 @@ def Page():
     solara.lab.use_task(_write_component_state, dependencies=[COMPONENT_STATE.value])
 
     class_plot_data = solara.use_reactive([])
+    class_data_loaded = solara.use_reactive(False)
     async def _load_class_data():
         class_measurements = LOCAL_API.get_class_measurements(GLOBAL_STATE, LOCAL_STATE)
         measurements = Ref(LOCAL_STATE.fields.class_measurements)
@@ -55,18 +56,36 @@ def Page():
             student_ids.set(ids)
         measurements.set(class_measurements)
 
+        print(student_ids.value)
         class_data_points = [m for m in class_measurements if m.student_id in student_ids.value]
+        print(len(class_data_points))
         class_plot_data.set(class_data_points)
+        class_data_loaded.set(True)
 
     solara.lab.use_task(_load_class_data)
 
     student_plot_data = solara.use_reactive(LOCAL_STATE.value.measurements)
+    student_data_loaded = solara.use_reactive(False)
     async def _load_student_data():
         if not LOCAL_STATE.value.measurements_loaded:
             logger.info("Loading measurements")
             measurements = LOCAL_API.get_measurements(GLOBAL_STATE, LOCAL_STATE)
             student_plot_data.set(measurements)
+        student_data_loaded.set(True)
     solara.lab.use_task(_load_student_data)
+
+    @solara.lab.computed
+    def data_ready():
+        return student_data_loaded.value and class_data_loaded.value
+
+    if not data_ready.value:
+        rv.ProgressCircular(
+            width=3,
+            color="primary",
+            indeterminate=True,
+            size=100,
+        )
+        return
 
     StateEditor(Marker, COMPONENT_STATE, LOCAL_STATE, LOCAL_API)
 
