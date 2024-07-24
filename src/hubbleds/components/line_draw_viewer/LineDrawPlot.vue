@@ -1,7 +1,7 @@
 <script>
 export default {
   name: "LineDrawPlot",
-  props: ["chart_id", "active", "fit_active", "line_drawn", "line_fit", "plot_data", "x_axis_label", "y_axis_label", "height", "margin"],
+  props: ["chart_id", "active", "show_best_fit", "fit_active", "line_drawn", "line_fit", "plot_data", "x_axis_label", "y_axis_label", "height", "margin"],
   async mounted() {
     await window.plotlyPromise;
 
@@ -279,6 +279,19 @@ export default {
     },
     setupPlotlyRestyleHandler() {
       this.element.on("plotly_restyle", this.onPlotlyRestyle);
+    },
+    addBestFitLayer() {
+      if (this.lastFitSlopes.length === 0) {
+        return;
+      }
+      const slope = this.lastFitSlopes[this.lastFitSlopes.length - 1];
+      const traceIndex = this.element.data.length - 2;
+      const xs = this.element.data[traceIndex].x;
+      const xmin = Math.min(xs);
+      const xmax = Math.max(xs);
+      const xmid = 0.5 * (xmax + xmin);
+      const y = slope * xmid;
+
     },
 
   },
