@@ -1,8 +1,9 @@
-from cosmicds.utils import empty_data_from_model_class, DEFAULT_VIEWER_HEIGHT
+from cosmicds.utils import empty_data_from_model_class, DEFAULT_VIEWER_HEIGHT, RepeatedTimer
 from cosmicds.viewers import CDSScatterView
 from glue.core import Data
 from glue_jupyter import JupyterApplication
 from hubbleds.base_component_state import transition_next, transition_previous
+from ipywwt import WWTWidget
 import numpy as np
 from pathlib import Path
 import reacton.ipyvuetify as rv
@@ -38,6 +39,8 @@ async def load_class_data():
     measurements.set(class_measurements)
 
     class_data_points = [m for m in class_measurements if m.student_id in student_ids.value]
+    Ref(LOCAL_STATE.fields.enough_students_ready).set(len(class_data_points) >= min(100, 5 * GLOBAL_STATE.value.classroom.size))
+        
     return class_data_points
 
 
@@ -141,7 +144,18 @@ def Page():
     if load_class_data.value:
         _on_class_data_loaded(load_class_data.value)
 
+    logger.info(COMPONENT_STATE.value.current_step)
+    if COMPONENT_STATE.value.current_step == Marker.wwt_wait:
+        with rv.Card():
+            WWTWidget.element()
+            if LOCAL_STATE.value.enough_students_ready:
+                solara.Button("Advance", on_click=lambda: transition_next(COMPONENT_STATE))
+            timer = RepeatedTimer(5, load_class_data)
+        return
+            
+
     StateEditor(Marker, COMPONENT_STATE, LOCAL_STATE, LOCAL_API)
+
 
     with solara.ColumnsResponsive(12, large=[4,8]):
         with rv.Col():
