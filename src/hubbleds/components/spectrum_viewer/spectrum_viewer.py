@@ -121,6 +121,8 @@ def SpectrumViewer(
 
         fig = px.line(spec_data_task.value, x="wave", y="flux")
 
+        fig.update_traces(hovertemplate="%{x:,.0f} nm<extra></extra>")
+
         fig.update_layout(
             margin=dict(l=0, r=10, t=10, b=0), yaxis=dict(fixedrange=True)
         )
@@ -150,7 +152,7 @@ def SpectrumViewer(
                 "text": f"{galaxy_data.element} (observed)",
                 "textposition": "top center",
                 "yanchor": "bottom",
-            },
+            }
             # visible=
         )
 
