@@ -137,15 +137,13 @@ def DotplotViewer(
             
 
             # override the default selection layer
-            def new_update_selection(self=dotplot_view):
+            def update_hover(self=dotplot_view):
                 state = cast(DotPlotViewerState, self.state)
                 x0 = state.x_min
                 dx = (state.x_max - state.x_min) * .005
                 y0 = state.y_min
                 dy = (state.y_max - state.y_min) * 2
-                self.selection_layer.update(x0=x0 - dx, dx=dx, y0=y0, dy=dy)
-
-            dotplot_view._update_selection_layer_bounds = new_update_selection
+                self.hover_layer.update(x0=x0 - dx, dx=dx, y0=y0, dy=dy)
 
             if x_label is not None:    
                 dotplot_view.state.x_axislabel = x_label
@@ -167,8 +165,6 @@ def DotplotViewer(
                     _add_vertical_line(dotplot_view, value, line_marker_color, label = "Line Marker", line_ids = line_ids)
                 
                 # line_ids.append(_line_ids_for_viewer(dotplot_view))
-            
-            
             
             if title is not None:
                 dotplot_view.state.title = title
@@ -211,19 +207,20 @@ def DotplotViewer(
                 else:
                    print("No points selected")
 
-                
+            hover_layer_id = "hover_layer"
+            unit_str = f" {unit}" if unit else ""
+            dotplot_view.hover_layer = go.Heatmap(x0=0.5, dx=1, y0=0, dy=1, meta=hover_layer_id,
+                                                  z=[list(range(201))], visible=True,
+                                                  opacity=0, coloraxis='coloraxis',
+                                                  hovertemplate=f"%{{x:,.0f}}{unit_str}<extra></extra>",
+                                                  )
+            update_hover(dotplot_view)
                 
             dotplot_view.figure.update_layout(clickmode="event", hovermode="closest", showlegend=False)
-            dotplot_view.selection_layer.on_click(on_click)
-            unit_str = f" {unit}" if unit else ""
-            dotplot_view.selection_layer.update(hovertemplate=f"%{{x:,.0f}}{unit_str}<extra></extra>")
-            dotplot_view.set_selection_active(True)
+            dotplot_view.hover_layer.on_click(on_click)
             # special treatment for go.Heatmap from https://stackoverflow.com/questions/58630928/how-to-hide-the-colorbar-and-legend-in-plotly-express-bar-graph#comment131880779_68555667
-            dotplot_view.selection_layer.update(visible=True, z = [list(range(201))], opacity=0, coloraxis='coloraxis')
             dotplot_view.figure.update_coloraxes(showscale=False)
 
-            
-            
             if line_marker_at.value is not None:
                 _update_lines(value = line_marker_at.value)
                 
