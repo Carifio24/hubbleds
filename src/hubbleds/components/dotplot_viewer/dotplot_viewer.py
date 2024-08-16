@@ -98,12 +98,10 @@ def DotplotViewer(
             
             viewer.figure.add_trace(line)
             
-        
-            
 
         def _add_viewer():
             if data is None:
-                viewer_data = Data(label = "Test Data", x=[randint(1, 10) for _ in range(30)])
+                viewer_data = Data(label="Test Data", x=[randint(1, 10) for _ in range(30)])
                 gjapp.data_collection.append(viewer_data)
             else: 
                 if isinstance(data, Data):
@@ -113,7 +111,6 @@ def DotplotViewer(
             
             dotplot_view: HubbleDotPlotViewer = gjapp.new_data_viewer(
                 HubbleDotPlotView, data=viewer_data, show=False)
-
             
             if component_id is not None:
                 dotplot_view.state.x_att = viewer_data.id[component_id]
@@ -136,14 +133,22 @@ def DotplotViewer(
                 layer._update_data = no_hover_update
             
 
-            # override the default selection layer
             def update_hover(self=dotplot_view):
                 state = cast(DotPlotViewerState, self.state)
                 x0 = state.x_min
-                dx = (state.x_max - state.x_min) * .005
+                dx = (state.x_max - state.x_min) * 0.005
                 y0 = state.y_min
                 dy = (state.y_max - state.y_min) * 2
-                self.hover_layer.update(x0=x0 - dx, dx=dx, y0=y0, dy=dy)
+                self.hover_layer.update(x0=x0-dx, dx=dx, y0=y0, dy=dy)
+                print(dotplot_view.state)
+
+            def on_zoom(xbounds_old, xbounds_new):
+                update_hover()
+                dotplot_view.state.update_bins_to_view()
+
+            dotplot_view.toolbar.tools["hubble:wavezoom"].on_zoom = on_zoom 
+            print(dotplot_view.state)
+
 
             if x_label is not None:    
                 dotplot_view.state.x_axislabel = x_label
@@ -162,7 +167,7 @@ def DotplotViewer(
                 line_ids.clear()
                 
                 if vertical_line_visible.value and value is not None:
-                    _add_vertical_line(dotplot_view, value, line_marker_color, label = "Line Marker", line_ids = line_ids)
+                    _add_vertical_line(dotplot_view, value, line_marker_color, label="Line Marker", line_ids=line_ids)
                 
                 # line_ids.append(_line_ids_for_viewer(dotplot_view))
             
@@ -201,7 +206,7 @@ def DotplotViewer(
                 print('Dotplot clicked')
                 if len(points.xs) > 0:
                     value = points.xs[0]
-                    _update_lines(value = value)
+                    _update_lines(value=value)
                     if on_click_callback is not None:
                         on_click_callback(trace, points, selector)
                 else:
@@ -209,13 +214,14 @@ def DotplotViewer(
 
             hover_layer_id = "hover_layer"
             unit_str = f" {unit}" if unit else ""
-            dotplot_view.hover_layer = go.Heatmap(x0=0.5, dx=1, y0=0, dy=1, meta=hover_layer_id,
+            hover_layer = go.Heatmap(x0=0.5, dx=1, y0=0, dy=1, meta=hover_layer_id,
                                                   z=[list(range(201))], visible=True,
                                                   opacity=0, coloraxis='coloraxis',
-                                                  hovertemplate=f"%{{x:,.0f}}{unit_str}<extra></extra>",
-                                                  )
+                                                  hovertemplate=f"%{{x:,.0f}}{unit_str}<extra></extra>")
+            dotplot_view.figure.add_trace(hover_layer)
+            dotplot_view.hover_layer = next(dotplot_view.figure.select_traces(dict(meta=hover_layer_id)))
             update_hover(dotplot_view)
-                
+
             dotplot_view.figure.update_layout(clickmode="event", hovermode="closest", showlegend=False)
             dotplot_view.hover_layer.on_click(on_click)
             # special treatment for go.Heatmap from https://stackoverflow.com/questions/58630928/how-to-hide-the-colorbar-and-legend-in-plotly-express-bar-graph#comment131880779_68555667
@@ -224,7 +230,7 @@ def DotplotViewer(
             if line_marker_at.value is not None:
                 _update_lines(value = line_marker_at.value)
                 
-            line_marker_at.subscribe(lambda new_val: _update_lines(value = new_val))
+            line_marker_at.subscribe(lambda new_val: _update_lines(value=new_val))
             vertical_line_visible.subscribe(lambda new_val: _update_lines())
 
             def cleanup():
