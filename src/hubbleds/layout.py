@@ -1,4 +1,6 @@
 from cosmicds.layout import BaseLayout
+
+from hubbleds.utils import mathjax_input_callback, mathjax_input_setup
 from .state import GLOBAL_STATE, LOCAL_STATE
 import solara
 from solara.toestand import Ref
@@ -11,6 +13,9 @@ logger = setup_logger("LAYOUT")
 
 @solara.component
 def Layout(children=[]):
+
+    mjax_setup = mathjax_input_setup(LOCAL_STATE)
+    mjax_cb = mathjax_input_callback(LOCAL_STATE)
 
     MathJaxSupport()
     PlotlySupport()

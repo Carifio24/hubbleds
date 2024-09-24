@@ -11,8 +11,8 @@ class FreeResponse(GenericQuestion):
     initialized: bool = True
     
     # not required but is useful for debugging/introspection
-    def update(self, response: str = ''):
-        super().update(response = response)
+    def update(self, response: str=''):
+        super().update(response=response)
 
     
     @property
@@ -21,7 +21,7 @@ class FreeResponse(GenericQuestion):
 
 class FreeResponses(GenericContainer[FreeResponse]):
     # https://docs.pydantic.dev/latest/concepts/models/#fields-with-non-hashable-default-values
-    responses: Dict[str, FreeResponse] = Field(default_factory = dict)
+    responses: Dict[str, FreeResponse] = Field(default_factory=dict)
     _item_attribute_name: str = "responses"
     
     def add(self, tag: str):
@@ -31,4 +31,4 @@ class FreeResponses(GenericContainer[FreeResponse]):
         return self.get_or_create_item(tag, FreeResponse)        
     
     def update(self, tag: str, response: str):
-        super().update_item(tag, response = response)
+        super().update_item(tag, response=response)

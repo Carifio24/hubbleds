@@ -12,7 +12,7 @@ from typing import List, Set, Tuple, TypeVar, Optional, cast, Any
 from collections.abc import Callable
 from solara.toestand import Reactive
 
-from hubbleds.state import StudentMeasurement
+from hubbleds.state import LocalState, StudentMeasurement
 from glue.core import Data
 from numpy import asarray
 
@@ -288,3 +288,19 @@ def sync_reactives(a: Reactive[A],
     b.subscribe(on_b_changed)
 
 
+def mathjax_input_setup(state: Reactive[LocalState]) -> Callable[[str], str]:
+    
+    def text(tag: str) -> str:
+        return state.value.free_responses.get_or_create(tag).response
+
+    return text
+
+
+def mathjax_input_callback(state: Reactive[LocalState]) -> Callable[[str, str], None]:
+    free_responses = state.value.free_responses
+
+    def cb(tag: str, text: str):
+        free_responses.update(tag, response=text)
+        state.set(state.value)
+
+    return cb
