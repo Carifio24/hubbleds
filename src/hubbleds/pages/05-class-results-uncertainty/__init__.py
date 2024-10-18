@@ -22,7 +22,8 @@ from hubbleds.components import UncertaintySlideshow, IdSlider
 from hubbleds.tools import *  # noqa
 from hubbleds.state import LOCAL_STATE, GLOBAL_STATE, StudentMeasurement, get_free_response, get_multiple_choice, mc_callback, fr_callback
 from hubbleds.utils import make_summary_data, models_to_glue_data
-from hubbleds.viewers.hubble_scatter_viewer import HubbleHistogramView, HubbleScatterView
+from hubbleds.viewers.hubble_histogram_viewer import HubbleHistogramView
+from hubbleds.viewers.hubble_scatter_viewer import HubbleScatterView
 from .component_state import COMPONENT_STATE, Marker
 from hubbleds.remote import LOCAL_API
 
@@ -238,6 +239,20 @@ def Page():
         class_hist_viewer.state.x_axislabel = "Age (Gyr)"
         class_hist_viewer.state.title = "All class ages (~100 galaxies each)"
         class_hist_viewer.layers[0].state.color = "#619EFF"
+
+        for viewer in hist_viewers:
+            with viewer.figure.batch_update():
+                viewer.figure.update_layout(hovermode="closest")
+                for layer in viewer.layers:
+                    for trace in layer.traces():
+                        trace.update(
+                            hoverinfo="text",
+                            hovertemplate="<b>Age</b>: %{x} Gyr"
+                        )
+
+        for viewer in hist_viewers:
+            for trace in viewer.figure.data:
+                print(trace)
 
         # This looks weird, and it kinda is!
         # The idea here is that the all students viewer will always have a wider range than the all classes viewer
