@@ -1,4 +1,5 @@
 from random import randint
+from cosmicds.viewers.dotplot.viewer import DotplotScatterLayerArtist
 
 import solara
 from glue.core import Data, Subset
@@ -173,14 +174,13 @@ def DotplotViewer(
                 for trace in layer.traces():
                     trace.update(hoverinfo="skip", hovertemplate=None)
 
-            for layer in dotplot_view.layers:
-                original_update_data = layer._update_data
-                def no_hover_update():
-                    with dotplot_view.figure.batch_update():
-                        original_update_data()
-                        for trace in layer.traces():
-                            trace.update(hoverinfo="skip", hovertemplate=None)
-                layer._update_data = no_hover_update
+            original_update_data = DotplotScatterLayerArtist._update_data
+            def no_hover_update(self: DotplotScatterLayerArtist):
+                with dotplot_view.figure.batch_update():
+                    original_update_data(self)
+                    for trace in layer.traces():
+                        trace.update(hoverinfo="skip", hovertemplate=None)
+            DotplotScatterLayerArtist._update_data = no_hover_update
                 
             def get_layer(layer_name):
                 layer_artist = dotplot_view.layer_artist_for_data(layer_name) # type: ignore
