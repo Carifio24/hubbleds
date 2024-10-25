@@ -27,6 +27,7 @@ logger = setup_logger("DOTPLOT")
 
 from glue_jupyter import JupyterApplication
 
+
 def valid_two_element_array(arr: Union[None, list]):
     return not (arr is None or len(arr) != 2)
 
@@ -39,6 +40,9 @@ def this_or_default(arr, default, index):
     if not valid_two_element_array(arr):
         return default
     return arr[index]
+
+
+_original_update_data = DotplotScatterLayerArtist._update_data
 
 @solara.component
 def DotplotViewer(
@@ -174,10 +178,9 @@ def DotplotViewer(
                 for trace in layer.traces():
                     trace.update(hoverinfo="skip", hovertemplate=None)
 
-            original_update_data = DotplotScatterLayerArtist._update_data
             def no_hover_update(self: DotplotScatterLayerArtist):
                 with dotplot_view.figure.batch_update():
-                    original_update_data(self)
+                    _original_update_data(self)
                     for trace in layer.traces():
                         trace.update(hoverinfo="skip", hovertemplate=None)
             DotplotScatterLayerArtist._update_data = no_hover_update
