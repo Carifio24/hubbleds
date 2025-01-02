@@ -198,7 +198,7 @@ export default {
         const value = this.parseAnswer(id);
         console.log(id, index, value, expectedAnswers[index], value && value === expectedAnswers[index]);
         // this.failed_validation_4_callback((!(value && value === expectedAnswers[index])));
-        return value && value === expectedAnswers[index];
+        return value != null && value === expectedAnswers[index];
       });
     }
   },
