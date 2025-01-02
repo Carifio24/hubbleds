@@ -966,6 +966,11 @@ export default {
       const isInteractStep = this.interact_steps_5.includes(newStep);
       const newCompleted = isInteractStep ? newStep - 1 : newStep;
       this.set_max_step_completed_5(Math.max(this.max_step_completed_5, newCompleted));
+      setTimeout(() => {
+        MathJax.typesetClear();
+        this.$forceUpdate();
+        MathJax.typesetPromise();
+      }, 200);
     }
   }
 };
