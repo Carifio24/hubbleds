@@ -175,7 +175,7 @@
                 &#8491;}}{\textcolor{black}{\colorbox{#DDD}{ {{ lambda_rest }} }} \text{ &#8491;}} - 1 \right) $$
               </v-card>
               <p>
-                Dividing the fraction gives you <b>{{ (lambda_obs / lambda_rest).toFixed(4) }}</b>.
+                Dividing the fraction gives you <b>{{ (lambda_obs / lambda_rest)?.toFixed(4) }}</b>.
                 Now we have:
               </p>
               <v-card
@@ -183,7 +183,7 @@
                   color="info"
               >
                 $$ v = c \times \left( \textcolor{black}{\colorbox{#FFAB91}{
-                {{ (lambda_obs / lambda_rest).toFixed(4) }} } } - 1 \right) $$
+                {{ (lambda_obs / lambda_rest)?.toFixed(4) }} } } - 1 \right) $$
                 <v-divider role="presentation"></v-divider>
                 <div
                     class="font-weight-medium mt-3"
@@ -290,10 +290,10 @@
                 &#8491;}}{\textcolor{black}{\colorbox{#DDD}{ {{ lambda_rest }} }} \text{ &#8491;}} - 1 \right) $$
 
                 $$ v = c \times \left( \textcolor{black}{\colorbox{#DDD}{
-                {{ (lambda_obs / lambda_rest).toFixed(4) }} } } - 1 \right) $$
+                {{ (lambda_obs / lambda_rest)?.toFixed(4) }} } } - 1 \right) $$
               </v-card>
               <p>
-                Subtracting 1 gives you <b>{{ (lambda_obs / lambda_rest - 1).toFixed(4) }}</b>. Now
+                Subtracting 1 gives you <b>{{ (lambda_obs / lambda_rest - 1)?.toFixed(4) }}</b>. Now
                 we are left with:
               </p>
               <v-card
@@ -301,7 +301,7 @@
                   color="info"
               >
                 $$ v = c \times \textcolor{black}{\colorbox{#FFAB91}{
-                {{ (lambda_obs / lambda_rest - 1).toFixed(4) }} } } $$
+                {{ (lambda_obs / lambda_rest - 1)?.toFixed(4) }} } } $$
                 <v-divider role="presentation"></v-divider>
                 <div
                     class="font-weight-medium mt-3"
@@ -406,7 +406,7 @@
                   color="info"
               >
                 $$ v = c \times \textcolor{black}{\colorbox{#FFAB91}{
-                {{ (lambda_obs / lambda_rest - 1).toFixed(4) }} } } $$
+                {{ (lambda_obs / lambda_rest - 1)?.toFixed(4) }} } } $$
               </v-card>
               <v-container>
                 <v-row>
@@ -537,9 +537,9 @@
                 color="info"
               >
                 $$ v = c \times \textcolor{black}{\colorbox{#FFAB91}{
-                {{ (lambda_obs / lambda_rest - 1).toFixed(4) }} } } $$
+                {{ (lambda_obs / lambda_rest - 1)?.toFixed(4) }} } } $$
                 $$ v = \bbox[#FBE9E7]{\input[speed_light][]{}} \text{ km/s} \times \textcolor{black}{\colorbox{#FFAB91}{
-                {{ (lambda_obs / lambda_rest - 1).toFixed(4) }} } } $$
+                {{ (lambda_obs / lambda_rest - 1)?.toFixed(4) }} } } $$
                 <v-divider role="presentation"></v-divider>
                 <div
                     class="font-weight-medium mt-3"
@@ -563,9 +563,9 @@
                 color="info"
               >
                 $$ v = c \times \textcolor{black}{\colorbox{#FFAB91}{
-                {{ (lambda_obs / lambda_rest - 1).toFixed(4) }} } } $$
-                $$ v = \textcolor{black}{\colorbox{#FFAB91}{ {{ student_c.toLocaleString() }} }}\text{ km/s} \times \textcolor{black}{\colorbox{#FFAB91}{
-                {{ (lambda_obs / lambda_rest - 1).toFixed(4) }} } } $$
+                {{ (lambda_obs / lambda_rest - 1)?.toFixed(4) }} } } $$
+                $$ v = \textcolor{black}{\colorbox{#FFAB91}{ {{ student_c?.toLocaleString() }} }}\text{ km/s} \times \textcolor{black}{\colorbox{#FFAB91}{
+                {{ (lambda_obs / lambda_rest - 1)?.toFixed(4) }} } } $$
                 <v-divider role="presentation"></v-divider>
                 <div
                     class="font-weight-medium mt-3"
@@ -695,25 +695,25 @@
 
                 <!-- Second equation -->
                 <div class="JaxEquation">
-                  $$ v = c \times \left( \textcolor{black}{\colorbox{#DDD}{ {{ (lambda_obs / lambda_rest).toFixed(4) }}
+                  $$ v = c \times \left( \textcolor{black}{\colorbox{#DDD}{ {{ (lambda_obs / lambda_rest)?.toFixed(4) }}
                   }} - 1 \right) $$
                 </div>
 
                 <!-- Third equation -->
                 <div class="JaxEquation">
-                  $$ v = c \times \textcolor{black}{\colorbox{#DDD}{ {{ (lambda_obs / lambda_rest - 1).toFixed(4) }} }}
+                  $$ v = c \times \textcolor{black}{\colorbox{#DDD}{ {{ (lambda_obs / lambda_rest - 1)?.toFixed(4) }} }}
                   $$
                 </div>
 
                 <!-- Fourth equation -->
                 <div class="JaxEquation">
-                  $$ v = \textcolor{black}{\colorbox{#DDD}{ {{ student_c.toLocaleString() }} }} \text{ km/s} \times
-                  \textcolor{black}{\colorbox{#DDD}{ {{ (lambda_obs / lambda_rest - 1).toFixed(4) }} }} $$
+                  $$ v = \textcolor{black}{\colorbox{#DDD}{ {{ student_c?.toLocaleString() }} }} \text{ km/s} \times
+                  \textcolor{black}{\colorbox{#DDD}{ {{ (lambda_obs / lambda_rest - 1)?.toFixed(4) }} }} $$
                 </div>
               </v-card>
               <p>
                 Great work. Your galaxy's velocity is
-                <b>{{ (student_c * (lambda_obs / lambda_rest - 1)).toFixed(0).toLocaleString() }}</b>
+                <b>{{ (student_c * (lambda_obs / lambda_rest - 1))?.toFixed(0)?.toLocaleString() }}</b>
                 km/s.
               </p>
               <v-card
@@ -721,7 +721,7 @@
                   color="info"
               >
                 $$ v = \textcolor{black}{\colorbox{#FFAB91}{
-                {{ (student_c * (lambda_obs / lambda_rest - 1)).toFixed(0).toLocaleString() }} } }
+                {{ (student_c * (lambda_obs / lambda_rest - 1))?.toFixed(0)?.toLocaleString() }} } }
                 \text{ km/s} $$
                 <v-divider role="presentation"></v-divider>
                 <div
@@ -957,11 +957,13 @@ mjx-mpadded {
 export default {
   methods: {
     mathJaxObserver(entries, _observer, intersecting) {
-      if (intersecting) {
-        this.$nextTick(() => {
-          this.refreshMathJax(entries.map(entry => entry.target));
-        });
-      }
+      MathJax.startup.promise.then(() => {
+        if (intersecting) {
+          this.$nextTick(() => {
+            this.refreshMathJax(entries.map(entry => entry.target));
+          });
+        }
+      });
     },
 
     removeMathJax(containers) {
