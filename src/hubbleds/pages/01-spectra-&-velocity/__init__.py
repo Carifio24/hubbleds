@@ -488,7 +488,7 @@ def Page():
                     else None
                 ),
                 deselect_galaxy_callback=_deselect_galaxy_callback,
-                sdss_12_counter=selection_tool_bg_count,
+                bg_counter=selection_tool_bg_count,
             )
             
             if show_snackbar.value:

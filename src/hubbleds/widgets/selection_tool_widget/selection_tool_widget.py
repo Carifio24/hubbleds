@@ -11,7 +11,7 @@ from hubbleds.state import GLOBAL_STATE
 
 # from pywwt.jupyter import WWTJupyterWidget
 from ipywwt import WWTWidget
-from traitlets import Dict, Instance, Int, Bool, observe
+from traitlets import Dict, Instance, Int, Bool, Unicode, observe
 
 from ...utils import FULL_FOV, GALAXY_FOV
 from ...utils import HUBBLE_ROUTE_PATH
@@ -29,8 +29,10 @@ class SelectionToolWidget(v.VueTemplate):
     flagged = Bool(False).tag(sync=True)
     selected = Bool(False).tag(sync=True)
     highlighted = Bool(False).tag(sync=True)
+    background = Unicode().tag(sync=True)
 
     SDSS_12 = "SDSS 12"
+    DSS = "DSS"
 
     UPDATE_TIME = 1  # seconds
     START_COORDINATES = SkyCoord(180 * u.deg, 25 * u.deg, frame="icrs")
@@ -38,9 +40,11 @@ class SelectionToolWidget(v.VueTemplate):
     def __init__(self, table_layer_data: dict, *args, **kwargs):
         # self.widget = WWTJupyterWidget(hide_all_chrome=True)
         self.widget = WWTWidget()
+
+        self.background = self.SDSS_12
         
         def _setup():
-            self.set_sdss_12()
+            self.set_background()
             self.widget.center_on_coordinates(
                 self.START_COORDINATES,
                 fov=6 * u.arcmin,  # start in close enough to see galaxies
@@ -106,16 +110,23 @@ class SelectionToolWidget(v.VueTemplate):
 
         super().__init__(*args, **kwargs)
 
-    def set_sdss_12(self):
-        if self.widget.foreground != self.SDSS_12:
-            self.widget.foreground = self.SDSS_12
+    def set_background(self):
+        if self.widget.foreground != self.background:
+            self.widget.foreground = self.background
         else:
-            self.widget._on_foreground_change({"new": self.SDSS_12})
+            self.widget._on_foreground_change({"new": self.background})
 
-        if self.widget.background != self.SDSS_12:
-            self.widget.background = self.SDSS_12
+        if self.widget.background != self.background:
+            self.widget.background = self.background
         else:
-            self.widget.set_background_image({"new": self.SDSS_12})
+            self.widget.set_background_image({"new": self.background})
+
+    def vue_toggle_background(self, _args=None):
+        if self.background == self.SDSS_12:
+            self.background = self.DSS
+        else:
+            self.background = self.SDSS_12
+        self.set_background()
 
     def center_on_start_coordinates(self):
         self.widget.center_on_coordinates(
@@ -125,7 +136,7 @@ class SelectionToolWidget(v.VueTemplate):
         )
 
     def show_galaxies(self, show=True):
-        self.set_sdss_12()
+        self.set_background()
         if self.sdss_layer is not None:
             if self.sdss_layer in self.widget.layers._layers:
                 self.widget.layers.remove_layer(self.sdss_layer)
@@ -158,7 +169,7 @@ class SelectionToolWidget(v.VueTemplate):
             self._on_galaxy_selected(galaxy)
         if self._deselect_galaxy is not None:
             self._deselect_galaxy()
-        self.set_sdss_12()
+        self.set_background()
         self.selected = False
 
     @property
@@ -171,7 +182,7 @@ class SelectionToolWidget(v.VueTemplate):
 
     def reset_view(self):
         print("in reset_view within selection_tool_widget.py")
-        self.set_sdss_12()
+        self.set_background()
         self.widget.center_on_coordinates(
             self.START_COORDINATES, fov=FULL_FOV, instant=True
         )
