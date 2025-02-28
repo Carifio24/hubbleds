@@ -125,13 +125,13 @@ def DistanceToolComponent(galaxy,
     
     solara.use_effect(turn_on_guard, [use_guard])
     
-    def reset_canvas():
+    def _reset_canvas():
         logger.info('resetting canvas')
         widget = cast(DistanceTool,solara.get_widget(tool))
         widget.reset_canvas()
     
     
-    solara.use_effect(reset_canvas, [reset_canvas])
+    solara.use_effect(_reset_canvas, [reset_canvas])
 
     def _define_callbacks():
         widget = cast(DistanceTool,solara.get_widget(tool))
