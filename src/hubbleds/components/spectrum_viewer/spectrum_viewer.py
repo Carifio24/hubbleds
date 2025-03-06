@@ -181,33 +181,41 @@ def SpectrumViewer(
         fig.update_layout(
             plot_bgcolor="white",
             font_family=DEFAULT_FONT,
-            title_font_family=DEFAULT_FONT,
+            title=dict(font=dict(family=DEFAULT_FONT)),
             margin=PLOTLY_MARGINS,
             yaxis=dict(
                 linecolor="black",
                 fixedrange=True,
-                title="Brightness",
                 showgrid=False,
                 showline=True,
                 linewidth=1,
                 mirror=True,
-                title_font_family=DEFAULT_FONT, 
-                title_font_size=16, 
+                title=dict(
+                    text="Brightness",
+                    font=dict(
+                        family=DEFAULT_FONT,
+                        size=16,
+                    )
+                ),
                 tickfont_size=12,
                 ticks="outside",
                 ticklen=5,
                 tickwidth=1,
                 tickcolor="black",
-                ),
+            ),
             xaxis=dict(
                 linecolor="black",
-                title="Wavelength (Angstroms)",
                 showgrid=False,
                 showline=True,
                 linewidth=1,
                 mirror=True,
-                title_font_family=DEFAULT_FONT, 
-                title_font_size=16, 
+                title=dict(
+                    text="Wavelength (Angstroms)",
+                    font=dict(
+                        family=DEFAULT_FONT,
+                        size=16,
+                    )
+                ),
                 tickfont_size=12,
                 hoverformat=".0f",
                 ticks="outside",
@@ -215,7 +223,7 @@ def SpectrumViewer(
                 tickwidth=1,
                 tickcolor="black",
                 ticksuffix=" Å",
-                ),
+            ),
             showlegend=False,
             hoverlabel=dict(
                 font_size=16,

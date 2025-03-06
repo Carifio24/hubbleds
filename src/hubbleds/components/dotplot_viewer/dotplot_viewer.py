@@ -203,11 +203,11 @@ def DotplotViewer(
                     spikesnap="cursor",
                     showspikes=True,
                     tickformat=",.0f",
-                    title_font_size=16,
+                    title=dict(font=dict(size=16)),
                 ),
                 yaxis=dict(
                     tickmode="auto",
-                    title_font_size=16,
+                    title=dict(font=dict(size=16)),
                 ),
             )
             
