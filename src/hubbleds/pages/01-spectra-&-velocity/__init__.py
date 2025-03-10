@@ -304,6 +304,19 @@ def Page():
         measurements = LOCAL_STATE.value.measurements + new_measurements
         Ref(LOCAL_STATE.fields.measurements).set(measurements)
     
+    def _select_one_random_galaxy():
+        if len(LOCAL_STATE.value.measurements) >= 1:
+            return
+        need = 1
+        galaxies = LOCAL_API.get_galaxies(LOCAL_STATE)
+        sample = np.random.choice(galaxies, size=need, replace=False)
+        new_measurements = [StudentMeasurement(student_id=GLOBAL_STATE.value.student.id,
+                                               galaxy=galaxy)
+                             for galaxy in sample]
+        measurements = LOCAL_STATE.value.measurements + new_measurements
+        Ref(LOCAL_STATE.fields.measurements).set(measurements)
+        _galaxy_selected_callback(measurements[0].galaxy)    
+
     def num_bad_velocities():
         measurements = Ref(LOCAL_STATE.fields.measurements)
         num = 0
@@ -460,6 +473,10 @@ def Page():
                 },
                 speech=speech.value,
             )
+
+            if COMPONENT_STATE.value.is_current_step(Marker.sel_gal2):
+                solara.Button(label="Select a random galaxy", on_click=_select_one_random_galaxy, classes=["emergency-button"])
+
             ScaffoldAlert(
                 GUIDELINE_ROOT / "GuidelineSelectGalaxies3.vue",
                 event_next_callback=lambda _: transition_next(COMPONENT_STATE),

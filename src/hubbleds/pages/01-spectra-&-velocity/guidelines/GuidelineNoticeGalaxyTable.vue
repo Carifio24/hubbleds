@@ -14,7 +14,7 @@
       class="mb-4"
     >
       <p>
-        Notice that your table now has a row for your selected galaxy, and the marker on your galaxy has changed from green to yellow.
+        Notice that your table now has a row for your selected galaxy.
       </p>
     </div>
   </scaffold-alert>

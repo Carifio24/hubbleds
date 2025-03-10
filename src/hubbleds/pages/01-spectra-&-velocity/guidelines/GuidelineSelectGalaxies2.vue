@@ -55,7 +55,10 @@
         Pan around the sky and click on one of these dots to select that galaxy.
       </p>
       <p style="font-weight: 300">
-        (If no green dots are visible, try clicking back and then next to refresh the view.)
+        (If no green dots are visible, try clicking back and then next to refresh the view.
+      </p>
+      <p style="font-weight: 300">
+        If the green dots still do not appear, use the gray "SELECT A RANDOM GALAXY" button to move forward.)
       </p>
     </div>
     <div
