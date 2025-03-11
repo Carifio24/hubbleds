@@ -79,6 +79,8 @@ def Page():
     loaded_component_state = solara.use_reactive(False)
     router = solara.use_router()
 
+    random_candidate_galaxy = solara.use_reactive(None)
+
     async def _load_component_state():
         # Load stored component state from database, measurement data is
         #   considered higher-level and is loaded when the story starts.
@@ -309,13 +311,8 @@ def Page():
             return
         need = 1
         galaxies = LOCAL_API.get_galaxies(LOCAL_STATE)
-        sample = np.random.choice(galaxies, size=need, replace=False)
-        new_measurements = [StudentMeasurement(student_id=GLOBAL_STATE.value.student.id,
-                                               galaxy=galaxy)
-                             for galaxy in sample]
-        measurements = LOCAL_STATE.value.measurements + new_measurements
-        Ref(LOCAL_STATE.fields.measurements).set(measurements)
-        _galaxy_selected_callback(measurements[0].galaxy)    
+        sample = np.random.choice(galaxies, size=need, replace=False)[0]
+        random_candidate_galaxy.set(sample)
 
     def num_bad_velocities():
         measurements = Ref(LOCAL_STATE.fields.measurements)
@@ -583,6 +580,7 @@ def Page():
                 ),
                 deselect_galaxy_callback=_deselect_galaxy_callback,
                 sdss_counter=selection_tool_bg_count,
+                candidate_galaxy=random_candidate_galaxy.value,
             )
             
             if show_snackbar.value:

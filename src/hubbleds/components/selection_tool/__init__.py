@@ -2,8 +2,8 @@
 import solara
 from reacton import ipyvuetify as rv
 from hubbleds.state import LOCAL_STATE
-from hubbleds.widgets import SelectionToolWidget
-from typing import Callable
+from hubbleds.widgets import SelectionToolWidget, selection_tool_widget
+from typing import Callable, Optional
 from hubbleds.state import GalaxyData
 
 
@@ -15,6 +15,7 @@ def SelectionTool(
     deselect_galaxy_callback: Callable,
     selected_measurement: dict | None,
     sdss_counter: solara.Reactive[int],
+    candidate_galaxy: Optional[GalaxyData] = None,
 ):
     with rv.Card() as main:
         with rv.Card(class_="pa-0 ma-0", elevation=0):
@@ -80,6 +81,14 @@ def SelectionTool(
         solara.use_effect(
             _update_selection, dependencies=[show_galaxies]
         )
+
+        def _set_candidate_galaxy():
+            if not candidate_galaxy:
+                return
+            selection_tool_widget = solara.get_widget(tool_container).children[0]
+            selection_tool_widget.current_galaxy = candidate_galaxy.model_dump()
+
+        solara.use_effect(_set_candidate_galaxy, dependencies=[candidate_galaxy])
 
         def _update_position():
             selection_tool_widget = solara.get_widget(tool_container).children[0]
