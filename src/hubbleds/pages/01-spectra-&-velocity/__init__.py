@@ -533,7 +533,7 @@ def Page():
                 selection_tool_galaxy = selected_example_measurement
             else:
                 selection_tool_galaxy = selected_measurement
-            
+
             SelectionTool(
                 show_galaxies=COMPONENT_STATE.value.current_step_in(
                     [Marker.sel_gal2, Marker.not_gal1, Marker.sel_gal3]
@@ -546,6 +546,7 @@ def Page():
                     else None
                 ),
                 deselect_galaxy_callback=_deselect_galaxy_callback,
+                on_wwt_ready=lambda: Ref(COMPONENT_STATE.fields.wwt_ready).set(True),
             )
             
             if show_snackbar.value:

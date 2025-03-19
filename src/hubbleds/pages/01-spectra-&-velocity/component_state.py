@@ -115,6 +115,7 @@ class ComponentState(BaseComponentState, BaseState):
     velocity_reflection_state: VelocityReflection = VelocityReflection()
     reflection_complete: bool = False
     show_dop_cal4_values: bool = False
+    wwt_ready: bool = Field(False, exclude=True)
 
     # computed fields are included in the model when serialized
     @computed_field
@@ -136,6 +137,10 @@ class ComponentState(BaseComponentState, BaseState):
             and self.total_galaxies == 0
             and not self.selected_galaxy
         )
+
+    @property
+    def sel_gal1_gate(self) -> bool:
+        return self.wwt_ready
 
     @property
     def not_gal1_gate(self) -> bool:

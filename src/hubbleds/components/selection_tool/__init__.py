@@ -25,6 +25,7 @@ def SelectionTool(
     galaxy_added_callback: Callable,
     deselect_galaxy_callback: Callable,
     selected_measurement: Optional[dict] = None,
+    on_wwt_ready: Optional[Callable] = None,
 ):
     show_wwt = solara.use_reactive(False)
     selected_galaxy = solara.use_reactive(None)
@@ -196,6 +197,9 @@ def SelectionTool(
             galaxy_selected_callback(galaxy)
 
         wwt_widget.set_selection_change_callback(_on_selection_changed)
+
+        if on_wwt_ready is not None:
+            on_wwt_ready()
 
     solara.use_effect(_on_wwt_ready, dependencies=[show_wwt.value])
 
