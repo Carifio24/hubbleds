@@ -545,6 +545,7 @@ def Page():
                     if selection_tool_galaxy.value is not None
                     else None
                 ),
+                background_counter=selection_tool_bg_count,
                 deselect_galaxy_callback=_deselect_galaxy_callback,
                 on_wwt_ready=lambda: Ref(COMPONENT_STATE.fields.wwt_ready).set(True),
             )
