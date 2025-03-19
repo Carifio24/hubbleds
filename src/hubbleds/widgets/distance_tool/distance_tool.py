@@ -82,8 +82,12 @@ class DistanceTool(v.VueTemplate):
         super().__del__()
 
     def set_background(self):
-        self.widget.foreground = self.background
-        self.widget.background = self.background
+        if self.widget.background != self.background:
+            self.widget.background = self.background
+            self.widget.foreground = self.background
+        else:
+          self.widget._on_background_change({"new": self.widget.background})
+          self.widget._on_foreground_change({"new": self.widget.background})
 
     def vue_toggle_background(self, _args=None):
         if self.background == self.SDSS:
