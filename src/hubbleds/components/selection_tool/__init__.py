@@ -8,7 +8,7 @@ from ipywwt import WWTWidget
 from reacton import ipyvuetify as rv
 
 from ...state import LOCAL_STATE
-from ...utils import GALAXY_FOV
+from ...utils import GALAXY_FOV, SURVEYS_URL
 
 SDSS = "SDSS9 color"
 DSS = "Digitized Sky Survey (Color)"
@@ -148,7 +148,7 @@ def SelectionTool(
         """
         Add the WWT widget to the container.
         """
-        wwt_widget = WWTWidget(use_remote=True)
+        wwt_widget = WWTWidget(use_remote=True, surveys_url=SURVEYS_URL)
         wwt_widget.observe(lambda change: show_wwt.set(change["new"]), "_wwt_ready")
 
         wwt_widget_container = solara.get_widget(wwt_container)

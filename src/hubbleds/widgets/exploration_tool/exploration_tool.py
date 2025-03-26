@@ -8,7 +8,7 @@ from ipywidgets import DOMWidget, widget_serialization
 from ipywwt import WWTWidget
 from traitlets import Bool, Instance, Int
 
-from ...utils import GALAXY_FOV
+from ...utils import GALAXY_FOV, SURVEYS_URL
 
 
 class ExplorationTool(v.VueTemplate):
@@ -36,7 +36,7 @@ class ExplorationTool(v.VueTemplate):
 
     def __init__(self, *args, **kwargs):
         # self.widget = WWTJupyterWidget(hide_all_chrome=True)
-        self.widget = WWTWidget(use_remote=True)
+        self.widget = WWTWidget(use_remote=True, surveys_url=SURVEYS_URL)
 
         # Wait for the WWT frontend to be ready
         self.widget.observe(lambda change: self._setup(),

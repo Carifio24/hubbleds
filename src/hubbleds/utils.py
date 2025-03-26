@@ -30,6 +30,7 @@ __all__ = [
     "MG_REST_LAMBDA",
     "GALAXY_FOV",
     "FULL_FOV",
+    "SURVEYS_URL",
     "angle_to_json",
     "angle_from_json",
     "age_in_gyr",
@@ -57,6 +58,8 @@ GALAXY_FOV = 1.5 * u.arcmin
 FULL_FOV = 60 * u.deg
 
 PLOTLY_MARGINS = {"l": 60, "r": 20, "t": 20, "b": 60}
+
+SURVEYS_URL = "https://gist.githubusercontent.com/Carifio24/447d69e14a3196665fa3cb59f93ec0ee/raw/surveys_minimal.wtml"
 
 IMAGE_BASE_URL = "https://cosmicds.github.io/cds-website/hubbleds_images"
 

@@ -4,6 +4,7 @@ import solara
 from typing import Callable
 
 from hubbleds.components.counter import Counter
+from hubbleds.utils import SURVEYS_URL
 
 
 @solara.component
@@ -53,7 +54,7 @@ def Stage4WaitingScreen(
                                   disabled=not can_advance)
         
     def _add_widget():
-        wwt_widget = WWTWidget(use_remote=True)
+        wwt_widget = WWTWidget(use_remote=True, surveys_url=SURVEYS_URL)
         wwt_widget.observe(lambda change: show_wwt.set(change["new"]), "_wwt_ready")
 
         wwt_widget_container = solara.get_widget(wwt_container)

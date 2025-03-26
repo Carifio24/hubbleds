@@ -8,7 +8,7 @@ from ipywidgets import DOMWidget, widget_serialization
 from ipywwt import WWTWidget
 from traitlets import Instance, Bool, Float, Int, Unicode, observe, Dict
 
-from ...utils import GALAXY_FOV, angle_to_json, \
+from ...utils import GALAXY_FOV, SURVEYS_URL, angle_to_json, \
     angle_from_json
 
 
@@ -54,7 +54,7 @@ class DistanceTool(v.VueTemplate):
     START_COORDINATES = SkyCoord(170 * u.deg, 13.3 * u.deg, frame='icrs')
 
     def __init__(self, *args, **kwargs):
-        self.widget = WWTWidget(use_remote=True)
+        self.widget = WWTWidget(use_remote=True, surveys_url=SURVEYS_URL)
         self.background = self.SDSS
         self.measuring = kwargs.get('measuring', False)
         self.guard = kwargs.get('guard', False)
