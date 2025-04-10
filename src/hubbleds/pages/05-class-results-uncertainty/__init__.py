@@ -798,18 +798,16 @@ def Page():
 
             if COMPONENT_STATE.value.current_step_between(Marker.sho_mya1, Marker.con_int1):
                 with rv.Col():
-                    with rv.Row():
-                        def _toggle_ignore(layer):
-                            return layer.layer.label not in ("My Summary", "Class Summaries")
+                    def _toggle_ignore(layer):
+                        return layer.layer.label not in ("My Summary", "Class Summaries")
 
-                        LayerToggle(viewer=viewers["student_hist"],
-                                    layers=["Class Summaries", "My Summary"],
-                                    names={"Class Summaries": "Class Ages",
-                                           "My Summary": "My Age"},
-                                    ignore_conditions=[_toggle_ignore])
+                    LayerToggle(viewer=viewers["student_hist"],
+                                layers=["Class Summaries", "My Summary"],
+                                names={"Class Summaries": "Class Ages",
+                                       "My Summary": "My Age"},
+                                ignore_conditions=[_toggle_ignore])
 
-                    with rv.Row():
-                        ViewerLayout(viewer=viewers["student_hist"])
+                    ViewerLayout(viewer=viewers["student_hist"])
             else:
                 with rv.Col():
                     ViewerLayout(viewer=viewers["student_hist"])
