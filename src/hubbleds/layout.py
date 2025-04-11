@@ -13,7 +13,10 @@ logger = setup_logger("LAYOUT")
 @solara.component
 def Layout(children=[]):
     BaseSetup(
-        story_name=LOCAL_STATE.value.story_id, story_title=LOCAL_STATE.value.title
+        api=LOCAL_API,
+        local_state=LOCAL_STATE,
+        story_name=LOCAL_STATE.value.story_id,
+        story_title=LOCAL_STATE.value.title,
     )
 
     student_id = Ref(GLOBAL_STATE.fields.student.id)
